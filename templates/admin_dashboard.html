@@ -6129,7 +6129,7 @@ function computeAIInsights() {
         return rem <= 5;
     }).length;
 
-    const labUtilPct = topLab ? Math.round((topLab[1] / total) * 100) : 0;
+    const labUtilPct    = topLab     ? Math.round((topLab[1]     / total) * 100) : 0;
     const topPurposePct = topPurpose ? Math.round((topPurpose[1] / total) * 100) : 0;
 
     // Compute week density
@@ -6147,11 +6147,65 @@ function computeAIInsights() {
         } catch(e) {}
     });
 
-    const weekEntries = Object.entries(weekCounts).sort((a,b) => a[0].localeCompare(b[0]));
-    const avgWeek = weekEntries.length ? Math.round(weekEntries.reduce((s,[,v]) => s+v, 0) / weekEntries.length) : 0;
-    const quietestWeek = weekEntries.length ? weekEntries.sort((a,b) => a[1]-b[1])[0] : null;
+    // Overall average across all weeks (for context)
+    const allWeekEntries = Object.entries(weekCounts).sort((a,b) => a[0].localeCompare(b[0]));
+    const avgWeek = allWeekEntries.length
+        ? Math.round(allWeekEntries.reduce((s,[,v]) => s+v, 0) / allWeekEntries.length)
+        : 0;
 
-    return { total, topLab, topPurpose, peakSlot, lowRemain, labUtilPct, topPurposePct, activeSessions, labCounts, purposeCounts, quietestWeek, avgWeek };
+    // PH today key
+    const phToday = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+    const todayKey = phToday.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+    // Next Monday (always at least 1 week ahead)
+    const dayOfWeek  = phToday.getDay();
+    const daysToMon  = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7 || 7;
+    const nextMon    = new Date(phToday);
+    nextMon.setDate(phToday.getDate() + daysToMon);
+    const nextFri    = new Date(nextMon);
+    nextFri.setDate(nextMon.getDate() + 4);
+    const fmt = dt  => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    // Future weeks only (from today onward)
+    const futureWeekEntries = Object.entries(weekCounts)
+        .filter(([k]) => k >= todayKey)
+        .sort((a,b) => a[1]-b[1]);
+
+    // Build bestWeekRec
+    let bestWeekRec = null;
+    if (futureWeekEntries.length > 0) {
+        const quietest = futureWeekEntries[0];
+        const wDate    = new Date(quietest[0] + 'T00:00:00');
+        const wEnd     = new Date(wDate);
+        wEnd.setDate(wDate.getDate() + 4);
+        const wMonth   = wDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        bestWeekRec = {
+            type: 'ok',
+            icon: '📅',
+            title: `Best week to sit-in — ${wMonth}`,
+            body: `Week of ${fmt(wDate)}–${fmt(wEnd)} has the lowest upcoming traffic (${quietest[1]} sessions vs avg ${avgWeek}/week). Less congestion, more PCs available — ideal for focused study.`
+        };
+    } else {
+        const wMonth = nextMon.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        bestWeekRec = {
+            type: 'ok',
+            icon: '📅',
+            title: `Recommended week — ${wMonth}`,
+            body: `Next week (${fmt(nextMon)}–${fmt(nextFri)}) has no reservations yet — maximum PC availability. Book early for the best seat!`
+        };
+    }
+
+    // quietestWeek kept for any legacy usage
+    const quietestWeek = allWeekEntries.length
+        ? [...allWeekEntries].sort((a,b) => a[1]-b[1])[0]
+        : null;
+
+    return {
+        total, topLab, topPurpose, peakSlot, lowRemain,
+        labUtilPct, topPurposePct, activeSessions,
+        labCounts, purposeCounts,
+        quietestWeek, avgWeek, bestWeekRec
+    };
 }
 
 function renderAIInsights(d) {
@@ -6175,18 +6229,9 @@ function renderAIInsights(d) {
     const recs = [];
 
     // Best week recommendation — built FIRST so it appears at top
-    if (d.quietestWeek && d.avgWeek > 0) {
-        const wDate = new Date(d.quietestWeek[0] + 'T00:00:00');
-        const wEnd  = new Date(wDate); wEnd.setDate(wDate.getDate() + 4);
-        const fmt   = dt => dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
-        const month = wDate.toLocaleDateString('en-US', { month:'long', year:'numeric' });
-        recs.push({
-            type: 'ok',
-            icon: '📅',
-            title: `Best week to sit-in — ${month}`,
-            body: `Week of ${fmt(wDate)}–${fmt(wEnd)} has the lowest session count (${d.quietestWeek[1]} sessions vs avg ${d.avgWeek}/week). This is the ideal window for students — labs are less congested and PCs are more available. This insight is delivered to students as a tip notification on their next login.`
-        });
-    }
+    // Get next Monday from today
+// NEW — always present, never empty
+if (d.bestWeekRec) recs.push(d.bestWeekRec);
 
     if (d.topLab && d.labUtilPct > 40) recs.push({ type: 'warn', icon: '🔴', title: 'Lab Congestion Risk', body: `Lab ${d.topLab[0]} accounts for ${d.labUtilPct}% of all sessions. Consider redistributing students to underutilized labs to reduce overcrowding.` });
     else if (d.topLab) recs.push({ type: 'ok', icon: '🟢', title: 'Balanced Lab Usage', body: `Lab distribution appears healthy. Lab ${d.topLab[0]} leads with ${d.labUtilPct}% utilization — no immediate action needed.` });
@@ -6301,8 +6346,8 @@ function buildLabRankings() {
     const feedbackRows = [...document.querySelectorAll('#feedbackTableBody tr')].filter(r => !r.querySelector('td[colspan]'));
     const labs = ['524','526','528','530','542','544'];
 
-    const labData = {};
-    labs.forEach(l => { labData[l] = { visits:0, uniqueUsers:new Set(), ratings:[], totalHours:0 }; });
+    const labInfo = {};
+    labs.forEach(l => { labInfo[l] = { visits: labData[l] || 0, uniqueUsers: new Set(), ratings: [], totalHours: 0 }; });
 
     sessionRows.forEach(r => {
         const cells = r.querySelectorAll('td');
@@ -6310,10 +6355,8 @@ function buildLabRankings() {
         const user   = cells[1]?.innerText.trim();
         const login  = cells[6]?.innerText.trim();
         const logout = cells[7]?.innerText.trim();
-        if (labData[lab]) {
-            labData[lab].visits++;
-            if (user) labData[lab].uniqueUsers.add(user);
-            // Calculate hours
+        if (labInfo[lab]) {
+            if (user) labInfo[lab].uniqueUsers.add(user);
             if (login && logout && logout !== '—') {
                 try {
                     const parseTime = t => {
@@ -6325,7 +6368,7 @@ function buildLabRankings() {
                         return h + m / 60;
                     };
                     const diff = parseTime(logout) - parseTime(login);
-                    if (diff > 0) labData[lab].totalHours += diff;
+                    if (diff > 0) labInfo[lab].totalHours += diff;
                 } catch(e) {}
             }
         }
@@ -6336,14 +6379,14 @@ function buildLabRankings() {
         const lab = cells[2]?.innerText.trim();
         let rating = 0;
         cells[4]?.querySelectorAll('span').forEach(s => { if (s.style.color === 'rgb(244, 185, 66)') rating++; });
-        if (labData[lab]) labData[lab].ratings.push(rating);
+        if (labInfo[lab]) labInfo[lab].ratings.push(rating);
     });
 
     const scored = labs.map(lab => {
-        const d = labData[lab];
-        const visits     = d.visits;
-        const hours      = parseFloat(d.totalHours.toFixed(2));
-        const avgRating  = d.ratings.length ? d.ratings.reduce((a,b)=>a+b,0)/d.ratings.length : 0;
+        const d = labInfo[lab];
+        const visits      = d.visits;
+        const hours       = parseFloat(d.totalHours.toFixed(2));
+        const avgRating   = d.ratings.length ? d.ratings.reduce((a,b) => a+b, 0) / d.ratings.length : 0;
         const uniqueUsers = d.uniqueUsers.size;
         const score = (visits * 0.25) + (hours * 0.25) + (avgRating * 5 * 0.25) + (uniqueUsers * 0.25);
         return { lab, visits, hours, avgRating, uniqueUsers, score };
@@ -6353,56 +6396,53 @@ function buildLabRankings() {
     const rankColors = ['#F4B942','#aaa','#cd7f32','#0F3E7D','#27ae60','#e74c3c'];
     const rankMedals = ['🥇','🥈','🥉','4th','5th','6th'];
 
-    // Ranking bars
     const grid = document.getElementById('labRankingGrid');
     if (grid) {
-    grid.innerHTML = scored.map((d, i) => `
-    <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:0.75rem;font-weight:800;color:${rankColors[i]};min-width:28px;text-align:center;">${rankMedals[i]}</span>
-        <span style="font-size:0.78rem;color:#555;font-weight:700;min-width:48px;">Lab ${d.lab}</span>
-        <div style="flex:1;background:#f0f0f0;border-radius:20px;height:10px;overflow:hidden;">
-            <div style="width:${Math.round((d.score/maxScore)*100)}%;height:100%;background:linear-gradient(90deg,${rankColors[i]},${rankColors[i]}99);border-radius:20px;transition:width 0.8s ease;"></div>
-        </div>
-        <span style="font-size:0.78rem;color:${rankColors[i]};font-weight:700;min-width:32px;text-align:right;">${d.score.toFixed(1)}</span>
-    </div>`).join('');
+        grid.innerHTML = scored.map((d, i) => `
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:0.75rem;font-weight:800;color:${rankColors[i]};min-width:28px;text-align:center;">${rankMedals[i]}</span>
+            <span style="font-size:0.78rem;color:#555;font-weight:700;min-width:48px;">Lab ${d.lab}</span>
+            <div style="flex:1;background:#f0f0f0;border-radius:20px;height:10px;overflow:hidden;">
+                <div style="width:${Math.round((d.score/maxScore)*100)}%;height:100%;background:linear-gradient(90deg,${rankColors[i]},${rankColors[i]}99);border-radius:20px;transition:width 0.8s ease;"></div>
+            </div>
+            <span style="font-size:0.78rem;color:${rankColors[i]};font-weight:700;min-width:32px;text-align:right;">${d.score.toFixed(1)}</span>
+        </div>`).join('');
     }
 
-    // Score table
     const tbody = document.getElementById('labScoreBody');
     if (tbody) {
-        const maxVisits = Math.max(...scored.map(d=>d.visits),1);
         tbody.innerHTML = scored.map((d, i) => `
-    <tr style="${i===0?'background:rgba(244,185,66,0.1);font-weight:700;':''}">
-        <td><span style="font-weight:800;color:#0F3E7D;">Lab ${d.lab}</span></td>
-        <td>${d.visits}</td>
-        <td style="color:#185FA5;font-weight:700;">${(d.visits*0.25).toFixed(2)}</td>
-        <td>${d.hours.toFixed(1)} hrs</td>
-        <td style="color:#185FA5;font-weight:700;">${(d.hours*0.25).toFixed(2)}</td>
-        <td>${d.avgRating.toFixed(1)} ★</td>
-        <td style="color:#185FA5;font-weight:700;">${(d.avgRating*5*0.25).toFixed(2)}</td>
-        <td>${d.uniqueUsers}</td>
-        <td style="color:#185FA5;font-weight:700;">${(d.uniqueUsers*0.25).toFixed(2)}</td>
-        <td style="background:rgba(244,185,66,0.15);font-weight:800;color:#0F3E7D;font-size:1rem;">${d.score.toFixed(2)}</td>
-    </tr>`).join('');
+        <tr style="${i===0 ? 'background:rgba(244,185,66,0.1);font-weight:700;' : ''}">
+            <td><span style="font-weight:800;color:#0F3E7D;">Lab ${d.lab}</span></td>
+            <td>${d.visits}</td>
+            <td style="color:#185FA5;font-weight:700;">${(d.visits * 0.25).toFixed(2)}</td>
+            <td>${d.hours.toFixed(1)} hrs</td>
+            <td style="color:#185FA5;font-weight:700;">${(d.hours * 0.25).toFixed(2)}</td>
+            <td>${d.avgRating.toFixed(1)} ★</td>
+            <td style="color:#185FA5;font-weight:700;">${(d.avgRating * 5 * 0.25).toFixed(2)}</td>
+            <td>${d.uniqueUsers}</td>
+            <td style="color:#185FA5;font-weight:700;">${(d.uniqueUsers * 0.25).toFixed(2)}</td>
+            <td style="background:rgba(244,185,66,0.15);font-weight:800;color:#0F3E7D;font-size:1rem;">${d.score.toFixed(2)}</td>
+        </tr>`).join('');
     }
 
-    // Quick stats
-    const allSessions = [...document.querySelectorAll('#recordsTableBody tr')].filter(r=>!r.querySelector('td[colspan]'));
-    const activeToday = [...document.querySelectorAll('#sitinTableBody tr')].filter(r=>!r.querySelector('td[colspan]')).length;
+    const allSessions = [...document.querySelectorAll('#recordsTableBody tr')].filter(r => !r.querySelector('td[colspan]'));
+    const activeToday = [...document.querySelectorAll('#sitinTableBody tr')].filter(r => !r.querySelector('td[colspan]')).length;
     document.getElementById('statTotalSessions').textContent = allSessions.length;
     document.getElementById('statBusiestLab').textContent = scored[0] ? scored[0].lab : '—';
     document.getElementById('statTopPurpose').textContent = Object.entries(
         allSessions.reduce((acc, r) => {
             const p = r.querySelectorAll('td')[3]?.innerText.trim();
-            if (p) acc[p] = (acc[p]||0)+1;
+            if (p) acc[p] = (acc[p] || 0) + 1;
             return acc;
         }, {})
-    ).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+    ).sort((a,b) => b[1]-a[1])[0]?.[0] || '—';
     document.getElementById('statActiveToday').textContent = activeToday;
-    
+
     buildTrendBars();
     buildPeakHoursBars();
 }
+
 function dismissAiTip() {
     document.getElementById('aiTipCard').style.display = 'none';
     // Use sessionStorage so card hides for this session only

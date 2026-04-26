@@ -119,7 +119,7 @@ BAD_WORDS = [
     'numbskull', 'numskull',
     'imbecile', 'imbeciles',
     'nitwit', 'dimwit', 'halfwit',
-    'bonehead', 'blockhead', 'knucklehead',
+    'bonehead', 'blockhead', 'knucklehead', 'nigger',
 
     # ── LEET VARIANTS ──
     'p0ta', 'p0t4', 'g4go', 'g@go',

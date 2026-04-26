@@ -2565,31 +2565,47 @@ function cancelReservation(resId) {
         });
 
         // ── Best week ──
-        const entries = Object.entries(weekMap).sort((a,b) => a[0].localeCompare(b[0]));
-        let weekBadge, weekTitle, weekBody, weekReason;
-        const now = new Date();
-        const fmt = dt => dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        const fmt = dt => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const phToday = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+const todayKey = phToday.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
 
-        if (entries.length >= 2) {
-            const avg = Math.round(entries.reduce((s,[,v]) => s+v, 0) / entries.length);
-            const quietest = [...entries].sort((a,b) => a[1]-b[1])[0];
-            const wStart = new Date(quietest[0] + 'T00:00:00');
-            const wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 4);
-            const month = wStart.toLocaleDateString('en-US', { month:'long', year:'numeric' });
-            weekBadge  = fmt(wStart) + '–' + fmt(wEnd);
-            weekTitle  = 'Best week to sit-in — ' + month;
-            weekBody   = 'Week of ' + fmt(wStart) + '–' + fmt(wEnd) + ' has the lowest lab traffic (' + quietest[1] + ' bookings vs avg ' + avg + '/week). Less competition for PCs — ideal for focused study!';
-            weekReason = quietest[1] + ' reservations that week · avg is ' + avg + '/week · more PCs available';
-        } else {
-            const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-            const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
-            const month = mon.toLocaleDateString('en-US', { month:'long', year:'numeric' });
-            weekBadge  = fmt(mon) + '–' + fmt(fri);
-            weekTitle  = 'Good time to sit-in — ' + month;
-            weekBody   = 'Lab traffic looks quiet this week! Great chance to grab a PC without waiting.';
-            weekReason = 'Low reservation activity · More PCs available · Less waiting time';
-        }
+// Overall avg across all weeks for context
+const allEntries = Object.entries(weekMap).sort((a,b) => a[0].localeCompare(b[0]));
+const avgAll = allEntries.length
+    ? Math.round(allEntries.reduce((s,[,v]) => s+v, 0) / allEntries.length)
+    : 0;
 
+// Next Monday (always at least 1 week ahead)
+const dayOfWeek = phToday.getDay();
+const daysToMon = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7 || 7;
+const nextMon   = new Date(phToday);
+nextMon.setDate(phToday.getDate() + daysToMon);
+const nextFri   = new Date(nextMon);
+nextFri.setDate(nextMon.getDate() + 4);
+
+// Future weeks only
+const futureEntries = Object.entries(weekMap)
+    .filter(([k]) => k >= todayKey)
+    .sort((a,b) => a[1]-b[1]);
+
+let weekBadge, weekTitle, weekBody, weekReason;
+
+if (futureEntries.length > 0) {
+    const quietest = futureEntries[0];
+    const wStart   = new Date(quietest[0] + 'T00:00:00');
+    const wEnd     = new Date(wStart); wEnd.setDate(wStart.getDate() + 4);
+    const month    = wStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    weekBadge  = fmt(wStart) + '–' + fmt(wEnd);
+    weekTitle  = 'Best week to sit-in — ' + month;
+    weekBody   = 'Week of ' + fmt(wStart) + '–' + fmt(wEnd) + ' has the lowest upcoming lab traffic (' + quietest[1] + ' bookings vs avg ' + avgAll + '/week). Less competition for PCs — ideal for focused study!';
+    weekReason = quietest[1] + ' reservations that week · avg is ' + avgAll + '/week · more PCs available';
+} else {
+    const month = nextMon.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    weekBadge  = fmt(nextMon) + '–' + fmt(nextFri);
+    weekTitle  = 'Recommended week — ' + month;
+    weekBody   = 'Next week (' + fmt(nextMon) + '–' + fmt(nextFri) + ') has no reservations yet — maximum PC availability. Book early for the best seat!';
+    weekReason = 'No bookings yet · Maximum PC availability · Best time to reserve';
+}
         // ── Best day ──
         const dayEntries = Object.entries(dayMap).filter(([,v]) => v > 0).sort((a,b) => a[1]-b[1]);
         const bestDay  = dayEntries.length ? dayEntries[0][0] : null;

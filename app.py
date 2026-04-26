@@ -1515,24 +1515,17 @@ def student_get_ai_tip():
 
     conn = _sq.connect('database.db')
 
-    # ── Week analysis (system-wide) ──
+    # ── Session data for historical analysis ──
     rows = conn.execute("""
-    SELECT time_in AS date FROM sitin_sessions
-    WHERE time_in IS NOT NULL AND time_in != ''
-    ORDER BY time_in DESC LIMIT 500
+        SELECT time_in FROM sitin_sessions
+        WHERE time_in IS NOT NULL AND time_in != ''
+        ORDER BY time_in DESC LIMIT 500
     """).fetchall()
 
-    # ── Lab counts (system-wide) ──
+    # ── Lab counts (least busy) ──
     lab_rows = conn.execute("""
         SELECT lab, COUNT(*) as cnt FROM sitin_sessions
         GROUP BY lab ORDER BY cnt ASC
-    """).fetchall()
-
-    # ── Day counts (system-wide) ──
-    day_rows = conn.execute("""
-    SELECT time_in AS date FROM sitin_sessions
-    WHERE time_in IS NOT NULL AND time_in != ''
-    ORDER BY time_in DESC LIMIT 500
     """).fetchall()
 
     # ── Purpose counts ──
@@ -1548,9 +1541,45 @@ def student_get_ai_tip():
         ORDER BY id DESC LIMIT 500
     """).fetchall()
 
+    # ── FUTURE reservations per week (admin-side knowledge) ──
+    today = date.today()
+    future_reservation_rows = conn.execute("""
+        SELECT date FROM reservations
+        WHERE date >= ? AND status NOT IN ('rejected', 'expired', 'done', 'cancelled')
+    """, (today.isoformat(),)).fetchall()
+
+    # ── FUTURE sit-in sessions per week ──
+    future_session_rows = conn.execute("""
+        SELECT time_in FROM sitin_sessions
+        WHERE time_in >= ? AND status = 'active'
+    """, (today.isoformat(),)).fetchall()
+
     conn.close()
 
-    # ── Compute quietest week ──
+    fmt = lambda d: d.strftime('%b %-d')
+
+    # ── Count future week traffic (reservations + active sessions) ──
+    future_week_counts = Counter()
+
+    for r in future_reservation_rows:
+        try:
+            d = date.fromisoformat(r[0].split(' ')[0])
+            monday = d - timedelta(days=d.weekday())
+            if monday >= today - timedelta(days=today.weekday()):
+                future_week_counts[monday.isoformat()] += 1
+        except:
+            pass
+
+    for r in future_session_rows:
+        try:
+            d = date.fromisoformat(r[0].split(' ')[0])
+            monday = d - timedelta(days=d.weekday())
+            if monday >= today - timedelta(days=today.weekday()):
+                future_week_counts[monday.isoformat()] += 1
+        except:
+            pass
+
+    # ── Historical week counts (for avg reference) ──
     week_counts = Counter()
     for r in rows:
         try:
@@ -1560,16 +1589,67 @@ def student_get_ai_tip():
         except:
             pass
 
-    # ── Compute busiest & quietest day ──
+    avg = round(sum(week_counts.values()) / max(len(week_counts), 1))
+
+    # ── Find best FUTURE week (next Monday onwards) ──
+    day_of_week = today.weekday()
+    days_to_next_mon = 7 if day_of_week == 0 else (7 - day_of_week)
+    next_monday = today + timedelta(days=days_to_next_mon)
+
+    # Build 8 future weeks, pick quietest
+    future_weeks = []
+    for i in range(8):
+        week_start = next_monday + timedelta(weeks=i)
+        week_end   = week_start + timedelta(days=4)
+        count      = future_week_counts.get(week_start.isoformat(), 0)
+        future_weeks.append((week_start, week_end, count))
+
+    future_weeks.sort(key=lambda x: x[2])
+    best_start, best_end, best_count = future_weeks[0]
+    month_label = best_start.strftime('%B %Y')
+    week_badge  = f'{fmt(best_start)}–{fmt(best_end)}'
+
+    if best_count == 0:
+        week_title  = f'Recommended week — {month_label}'
+        week_body   = (
+            f'Next week ({fmt(best_start)}–{fmt(best_end)}) has no reservations yet '
+            f'— maximum PC availability. Book early for the best seat!'
+        )
+        week_reason = 'No reservations yet · Maximum PC availability'
+    else:
+        week_title  = f'Best week to sit-in — {month_label}'
+        week_body   = (
+            f'Week of {fmt(best_start)}–{fmt(best_end)} has the lowest upcoming traffic '
+            f'({best_count} sessions vs avg {avg}/week). '
+            f'Less competition for PCs — ideal for focused study!'
+        )
+        week_reason = (
+            f'Only {best_count} reservations that week · '
+            f'avg is {avg}/week · more PCs available'
+        )
+
+    # ── Best/worst day ──
     day_counts = Counter()
-    for r in day_rows:
+    for r in rows:
         try:
             d = date.fromisoformat(r[0].split(' ')[0])
             day_counts[d.strftime('%a')] += 1
         except:
             pass
 
-    # ── Compute peak hour slot ──
+    best_day  = None
+    worst_day = None
+    if day_counts:
+        sorted_days = sorted(day_counts.items(), key=lambda x: x[1])
+        best_day  = sorted_days[0][0]
+        worst_day = sorted_days[-1][0]
+
+    # ── Most available lab ──
+    least_busy_lab = None
+    if lab_rows:
+        least_busy_lab = lab_rows[0][0] if not hasattr(lab_rows[0], 'keys') else lab_rows[0]['lab']
+
+    # ── Best time slot (least used) ──
     slot_counts = Counter()
     for r in hour_rows:
         try:
@@ -1577,78 +1657,29 @@ def student_get_ai_tip():
             if ' ' in t:
                 t = t.split(' ')[1]
             h = int(t.split(':')[0])
-            if 8 <= h < 12:
-                slot_counts['Morning (8–12 AM)'] += 1
-            elif 12 <= h < 15:
-                slot_counts['Afternoon (12–3 PM)'] += 1
-            elif 15 <= h < 18:
-                slot_counts['Late Afternoon (3–6 PM)'] += 1
-            elif 18 <= h < 20:
-                slot_counts['Evening (6–8 PM)'] += 1
+            if 8  <= h < 12: slot_counts['Morning (8–12 AM)'] += 1
+            elif 12 <= h < 15: slot_counts['Afternoon (12–3 PM)'] += 1
+            elif 15 <= h < 18: slot_counts['Late Afternoon (3–6 PM)'] += 1
+            elif 18 <= h < 20: slot_counts['Evening (6–8 PM)'] += 1
         except:
             pass
 
-    today = date.today()
-    fmt = lambda d: d.strftime('%b %d')
-
-    # ── Best week recommendation ──
-    if week_counts:
-        avg = sum(week_counts.values()) / len(week_counts)
-        quietest = min(week_counts.items(), key=lambda x: x[1])
-        w_start = date.fromisoformat(quietest[0])
-        w_end = w_start + timedelta(days=4)
-        month = w_start.strftime('%B %Y')
-        week_badge = f'{fmt(w_start)}–{fmt(w_end)}'
-        week_title = f'Best week to sit-in — {month}'
-        week_body = (
-            f'Week of {fmt(w_start)}–{fmt(w_end)} has the lowest lab traffic '
-            f'({quietest[1]} sessions vs avg {round(avg)}/week). '
-            f'Less competition for PCs — ideal for focused study!'
-        )
-        week_reason = (
-            f'Only {quietest[1]} sessions that week · '
-            f'avg is {round(avg)}/week · more PCs available'
-        )
-    else:
-        mon = today - timedelta(days=today.weekday())
-        fri = mon + timedelta(days=4)
-        week_badge = f'{fmt(mon)}–{fmt(fri)}'
-        week_title = f'Good time to sit-in — {today.strftime("%B %Y")}'
-        week_body = 'Lab traffic looks quiet this week! Great chance to grab a PC.'
-        week_reason = 'Low reservation activity · More PCs available'
-
-    # ── Best day (least crowded) ──
-    best_day = None
-    worst_day = None
-    if day_counts:
-        sorted_days = sorted(day_counts.items(), key=lambda x: x[1])
-        best_day = sorted_days[0][0]
-        if len(sorted_days) > 1:
-            worst_day = sorted_days[-1][0]
-
-    # ── Most available lab ──
-    least_busy_lab = None
-    if lab_rows:
-        least_busy_lab = lab_rows[0]['lab'] if hasattr(lab_rows[0], 'keys') else lab_rows[0][0]
-
-    # ── Best time slot ──
     best_time = None
     if slot_counts:
         best_time = min(slot_counts.items(), key=lambda x: x[1])[0]
 
-    # ── Top purpose ──
     top_purpose = purpose_rows[0] if purpose_rows else None
 
     tip = {
-        'title': week_title,
-        'body': week_body,
-        'reason': week_reason,
-        'badge': week_badge,
-        'best_day': best_day,
-        'worst_day': worst_day,
+        'title':          week_title,
+        'body':           week_body,
+        'reason':         week_reason,
+        'badge':          week_badge,
+        'best_day':       best_day,
+        'worst_day':      worst_day,
         'least_busy_lab': least_busy_lab,
-        'best_time': best_time,
-        'top_purpose': top_purpose,
+        'best_time':      best_time,
+        'top_purpose':    top_purpose,
     }
     return jsonify({'tip': tip})
 
