@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CCS Sit-in System</title>
+    <title>Register - CCS Sit-in System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
     body {
@@ -51,10 +51,14 @@
     }
 
     .btn-register {
-        background: rgba(244, 185, 66, 0.9) !important;
-        backdrop-filter: blur(8px);
-        border-radius: 10px !important;
-    }
+    background: linear-gradient(135deg, #F4B942, #e6a800) !important;
+    color: #1a2e5a !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    padding: 0.5rem 1.3rem !important;
+    box-shadow: 0 3px 10px rgba(244,185,66,0.4) !important;
+    border: none !important;
+}
 </style>
 </head>
 <body>
@@ -88,159 +92,191 @@
         <div class="register-card">
 
             <div class="form-content">
-                <h1>Login</h1>
-                <p class="form-subtitle">Enter your credentials to continue</p>
+                <h1>Create Account</h1>
+                <p class="form-subtitle">Register to access the sit-in monitoring system</p>
 
-                {% if request.args.get('registered') %}
-                <div style="background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.75rem 1rem; border-radius:6px; margin-bottom:1rem; font-size:0.9rem; font-weight:600;">
-                    ✓ Registration successful! You can now log in.
-                </div>
-                {% endif %}
+                    {% if error %}
+                        <div class="error-message">
+                            ⚠️ {{ error }}
+                        </div>
+                    {% endif %}
 
-                {% if error %}
-                <div class="error-message">
-                    ⚠️ {{ error }}
-                </div>
-                {% endif %}
-
-                <form action="/login" method="post" id="loginForm">
+                <form id="registerForm" action="/register" method="post">
 
                     <div class="form-field">
-                        <label for="loginId">ID Number</label>
-                        <input type="text" id="loginId" name="loginId"
-                               required placeholder="Enter your ID number">
+                        <label for="idNumber">ID Number</label>
+                        <input type="text" id="idNumber" name="idNumber"
+                            required placeholder="e.g. 23456789"
+                            maxlength="8"
+                            inputmode="numeric"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" id="lastName" name="lastName"
+                                   required placeholder="Last name"
+                                   value="{{ form_data.lastName if form_data else '' }}">
+                        </div>
+                        <div class="form-field">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" name="firstName"
+                                   required placeholder="First name"
+                                   value="{{ form_data.firstName if form_data else '' }}">
+                        </div>
                     </div>
 
                     <div class="form-field">
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" name="loginPassword"
+                        <label for="middleName">Middle Name</label>
+                        <input type="text" id="middleName" name="middleName"
+                               placeholder="Middle name (optional)"
+                               value="{{ form_data.middleName if form_data else '' }}">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="course">Course</label>
+                        <select id="course" name="course" required>
+                            <option value="">Select your course</option>
+
+                            <optgroup label="🖥️ College of Computer Studies">
+                                <option value="BSIT" {% if form_data and form_data.course == 'BSIT' %}selected{% endif %}>BS Information Technology</option>
+                                <option value="BSCS" {% if form_data and form_data.course == 'BSCS' %}selected{% endif %}>BS Computer Science</option>
+                                <option value="BSCoE" {% if form_data and form_data.course == 'BSCoE' %}selected{% endif %}>BS Computer Engineering</option>
+                                <option value="CISCO" {% if form_data and form_data.course == 'CISCO' %}selected{% endif %}>CISCO Networking Academy (Module 1-4)</option>
+                            </optgroup>
+
+                            <optgroup label="⚙️ College of Engineering">
+                                <option value="BSCE" {% if form_data and form_data.course == 'BSCE' %}selected{% endif %}>BS Civil Engineering</option>
+                                <option value="BSME" {% if form_data and form_data.course == 'BSME' %}selected{% endif %}>BS Mechanical Engineering</option>
+                                <option value="BSEE" {% if form_data and form_data.course == 'BSEE' %}selected{% endif %}>BS Electrical Engineering</option>
+                                <option value="BSIE" {% if form_data and form_data.course == 'BSIE' %}selected{% endif %}>BS Industrial Engineering</option>
+                                <option value="BSNAME" {% if form_data and form_data.course == 'BSNAME' %}selected{% endif %}>BS Naval Architecture and Marine Engineering</option>
+                            </optgroup>
+
+                            <optgroup label="📚 College of Education">
+                                <option value="BEED" {% if form_data and form_data.course == 'BEED' %}selected{% endif %}>Bachelor of Elementary Education</option>
+                                <option value="BSED" {% if form_data and form_data.course == 'BSED' %}selected{% endif %}>Bachelor of Secondary Education</option>
+                            </optgroup>
+
+                            <optgroup label="⚖️ College of Criminal Justice Education">
+                                <option value="BSCRIM" {% if form_data and form_data.course == 'BSCRIM' %}selected{% endif %}>BS Criminology</option>
+                            </optgroup>
+
+                            <optgroup label="💼 College of Business and Accountancy">
+                                <option value="BSCOM" {% if form_data and form_data.course == 'BSCOM' %}selected{% endif %}>BS Commerce</option>
+                                <option value="BSA" {% if form_data and form_data.course == 'BSA' %}selected{% endif %}>BS Accountancy</option>
+                                <option value="BSCA" {% if form_data and form_data.course == 'BSCA' %}selected{% endif %}>BS Customs Administration</option>
+                                <option value="BSHRM" {% if form_data and form_data.course == 'BSHRM' %}selected{% endif %}>BS Hotel and Restaurant Management</option>
+                            </optgroup>
+
+                            <optgroup label="🎨 College of Arts and Sciences">
+                                <option value="ABPOLSCI" {% if form_data and form_data.course == 'ABPOLSCI' %}selected{% endif %}>AB Political Science</option>
+                                <option value="ABENG" {% if form_data and form_data.course == 'ABENG' %}selected{% endif %}>AB English</option>
+                                <option value="BSINDPSY" {% if form_data and form_data.course == 'BSINDPSY' %}selected{% endif %}>BS Industrial Psychology</option>
+                            </optgroup>
+
+                            <optgroup label="💻 Vocational / Short Courses">
+                                <option value="COMPSEC" {% if form_data and form_data.course == 'COMPSEC' %}selected{% endif %}>Computer Secretarial</option>
+                                <option value="ECS" {% if form_data and form_data.course == 'ECS' %}selected{% endif %}>English Communication Skills</option>
+                                <option value="KOREAN" {% if form_data and form_data.course == 'KOREAN' %}selected{% endif %}>Conversational Korean</option>
+                            </optgroup>
+
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="yearLevel">Year Level</label>
+                        <select id="yearLevel" name="yearLevel" required>
+                            <option value="">Select year level</option>
+                            <option value="1" {% if form_data and form_data.yearLevel == '1' %}selected{% endif %}>1st Year</option>
+                            <option value="2" {% if form_data and form_data.yearLevel == '2' %}selected{% endif %}>2nd Year</option>
+                            <option value="3" {% if form_data and form_data.yearLevel == '3' %}selected{% endif %}>3rd Year</option>
+                            <option value="4" {% if form_data and form_data.yearLevel == '4' %}selected{% endif %}>4th Year</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password"
                                required minlength="6"
-                               placeholder="Enter your password">
+                               placeholder="Minimum 6 characters">
                     </div>
 
-                    <!-- Remember Me + Forgot Password row -->
-                    <div class="login-options-row">
-                        <label class="remember-me-label">
-                            <input type="checkbox" id="rememberMe" name="rememberMe" class="remember-checkbox">
-                            <span class="checkmark"></span>
-                            Remember me
-                        </label>
-                        <a href="/forgot-password" class="forgot-password-link">Forgot password?</a>
+                    <div class="form-field">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword"
+                               required minlength="6"
+                               placeholder="Re-enter your password">
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-full">Login</button>
+                    <div class="form-field">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email"
+                               required placeholder="e.g. juan@email.com"
+                               value="{{ form_data.email if form_data else '' }}">
+                    </div>
 
-                    <p class="form-footer">Don't have an account?
-                        <a href="/register.html">Register here</a>
+                    <div class="form-field">
+                        <label for="address">Address</label>
+                        <input type="text" id="address" name="address"
+                               required placeholder="Your address"
+                               value="{{ form_data.address if form_data else '' }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">Register Now</button>
+
+                    <p class="form-footer">Already have an account?
+                        <a href="/login" style="color:#0F3E7D; font-weight:bold;">Login here</a>
                     </p>
-
                 </form>
             </div>
         </div>
     </main>
 
-    <!-- Forgot Password Modal -->
-    <div class="modal-overlay" id="forgotModal" style="display:none;">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3>Reset Password</h3>
-                <button class="modal-close" onclick="closeForgotModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <p style="color:#666; font-size:0.9rem; margin-bottom:1.5rem;">
-                    Enter your ID number and registered email. We'll send you instructions to reset your password.
-                </p>
-                <form action="/forgot-password" method="post" id="forgotForm">
-                    <div class="form-field">
-                        <label>ID Number</label>
-                        <input type="text" name="forgotId" required placeholder="e.g. 2024-00001">
-                    </div>
-                    <div class="form-field">
-                        <label>Email Address</label>
-                        <input type="email" name="forgotEmail" required placeholder="Your registered email">
-                    </div>
-                    <div id="forgotMessage" style="display:none;"></div>
-                    <button type="button" class="btn btn-primary btn-full" onclick="handleForgotPassword()">
-                        Send Reset Link
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <footer>
         <p>&copy; 2026 College of Computer Studies - University of Cebu</p>
     </footer>
 
-    <script>
-        // ── Remember Me ──
-        window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('rememberedId');
-            if (saved) {
-                document.getElementById('loginId').value = saved;
-                document.getElementById('rememberMe').checked = true;
-            }
-        });
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const id       = document.getElementById('idNumber').value.trim();
+        const password = document.getElementById('password').value;
+        const confirm  = document.getElementById('confirmPassword').value;
 
-        document.getElementById('loginForm').addEventListener('submit', function() {
-            const cb = document.getElementById('rememberMe');
-            const id = document.getElementById('loginId').value;
-            if (cb.checked) {
-                localStorage.setItem('rememberedId', id);
-            } else {
-                localStorage.removeItem('rememberedId');
-            }
-        });
-
-        // ── Forgot Password Modal ──
-        const forgotLink = document.querySelector('.forgot-password-link');
-        forgotLink.addEventListener('click', function(e) {
+        if (!/^\d{8}$/.test(id)) {
             e.preventDefault();
-            document.getElementById('forgotModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        });
-
-        function closeForgotModal() {
-            document.getElementById('forgotModal').style.display = 'none';
-            document.body.style.overflow = '';
+            document.getElementById('idNumber').setCustomValidity('ID Number must be exactly 8 digits.');
+            document.getElementById('idNumber').reportValidity();
+            return;
+        } else {
+            document.getElementById('idNumber').setCustomValidity('');
         }
 
-        document.getElementById('forgotModal').addEventListener('click', function(e) {
-            if (e.target === this) closeForgotModal();
-        });
-
-        function handleForgotPassword() {
-            const id    = document.querySelector('[name="forgotId"]').value.trim();
-            const email = document.querySelector('[name="forgotEmail"]').value.trim();
-            const msg   = document.getElementById('forgotMessage');
-
-            if (!id || !email) {
-                msg.style.display = 'block';
-                msg.style.cssText = 'display:block; background:#fdecea; border-left:4px solid #c0392b; color:#c0392b; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
-                msg.textContent = '⚠️ Please fill in all fields.';
-                return;
-            }
-
-            // POST to /forgot-password
-            fetch('/forgot-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `forgotId=${encodeURIComponent(id)}&forgotEmail=${encodeURIComponent(email)}`
-            })
-            .then(r => r.json())
-            .then(data => {
-                msg.style.cssText = data.success
-                    ? 'display:block; background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;'
-                    : 'display:block; background:#fdecea; border-left:4px solid #c0392b; color:#c0392b; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
-                msg.textContent = data.message;
-            })
-            .catch(() => {
-                // Graceful fallback if endpoint not ready
-                msg.style.cssText = 'display:block; background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
-                msg.textContent = '✓ If your ID and email match, a reset link has been sent.';
-            });
+        if (password.length < 6) {
+            e.preventDefault();
+            document.getElementById('password').setCustomValidity('Password must be at least 6 characters.');
+            document.getElementById('password').reportValidity();
+            return;
+        } else {
+            document.getElementById('password').setCustomValidity('');
         }
-    </script>
+
+        if (password !== confirm) {
+            e.preventDefault();
+            document.getElementById('confirmPassword').setCustomValidity('Passwords do not match.');
+            document.getElementById('confirmPassword').reportValidity();
+            return;
+        } else {
+            document.getElementById('confirmPassword').setCustomValidity('');
+        }
+    });
+
+    // Clear custom validity on input
+    document.getElementById('idNumber').addEventListener('input', function() { this.setCustomValidity(''); });
+    document.getElementById('password').addEventListener('input', function() { this.setCustomValidity(''); });
+    document.getElementById('confirmPassword').addEventListener('input', function() { this.setCustomValidity(''); });
+</script>
 
 </body>
 </html>

@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, redirect, render_template, render_template_string, session, jsonify
 from dbhelper import (
+    get_admin_notifications,
     get_student_notifications,
     mark_notification_read,
     get_read_notification_ids,
@@ -215,8 +216,10 @@ def admin_add_student():
 # ══════════════════════════════════════════
 # ROUTE — REGISTER
 # ══════════════════════════════════════════
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    if request.method == 'GET':
+        return render_template('register.html', error=None, form_data={})
     id_number    = request.form.get('idNumber', '').strip()
     first_name   = request.form.get('firstName', '').strip()
     last_name    = request.form.get('lastName', '').strip()
@@ -302,7 +305,65 @@ def dashboard():
         session.clear()
         return redirect('/login')
 
-    sessions      = get_student_sessions(session['student_id'])
+    from datetime import datetime as _dt
+    raw_sessions = get_student_sessions(session['student_id'])
+    sessions = []
+    for s in raw_sessions:
+        s = dict(s)
+        duration = '—'
+        if s.get('time_in') and s.get('time_out'):
+            try:
+                for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+                    try:
+                        t_in  = _dt.strptime(s['time_in'].strip(), fmt)
+                        t_out = _dt.strptime(s['time_out'].strip(), fmt)
+                        mins  = max(0, int((t_out - t_in).total_seconds() // 60))
+                        if mins >= 60:
+                            hrs = mins // 60
+                            rem = mins % 60
+                            hr_label = 'hr' if hrs == 1 else 'hrs'
+                            duration = f'{hrs} {hr_label} {rem} min' if rem > 0 else f'{hrs} {hr_label}'
+                        else:
+                            duration = f'{mins} min'
+                        break
+                    except: continue
+            except: pass
+        s['duration'] = duration
+        sessions.append(s)
+
+        # ── History Stats ──
+    def _fmt(m):
+        if m >= 60:
+            h, r = m // 60, m % 60
+            return f"{h}h {r}m" if r else f"{h}h"
+        return f"{m}m"
+
+    done_sessions = [s for s in sessions if s.get('status') == 'done']
+    total_sessions_used = len(done_sessions)
+    total_minutes = 0
+    max_minutes = 0
+    for s in done_sessions:
+        if s.get('time_in') and s.get('time_out'):
+            try:
+                for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+                    try:
+                        t_in  = _dt.strptime(s['time_in'].strip(), fmt)
+                        t_out = _dt.strptime(s['time_out'].strip(), fmt)
+                        mins  = max(0, int((t_out - t_in).total_seconds() // 60))
+                        total_minutes += mins
+                        if mins > max_minutes:
+                            max_minutes = mins
+                        break
+                    except: continue
+            except: pass
+
+    avg_minutes = total_minutes // total_sessions_used if total_sessions_used else 0
+    history_stats = {
+        'total_hours':   _fmt(total_minutes),
+        'total_sessions': total_sessions_used,
+        'avg_duration':  _fmt(avg_minutes),
+        'longest':       _fmt(max_minutes),
+    }
     announcements = get_all_announcements()
 
     # Build set of session IDs that already have feedback
@@ -321,6 +382,7 @@ def dashboard():
     return render_template('student_dashboard.html',
         student=student,
         sessions=sessions,
+        history_stats=history_stats,
         announcements=announcements,
         submitted_feedback_ids=submitted_ids,
         reservations=reservations,
@@ -696,10 +758,147 @@ def admin_add_announcement():
     if not title or not content:
         return render_template_string(ERROR_PAGE,
             message="Title and content are required!", back_page="/admin/dashboard")
-    add_announcement(title, content, session['admin_name'])
+
+    attachment_path = attachment_type = attachment_name = None
+    file = request.files.get('attachment')
+    if file and file.filename:
+        ext = os.path.splitext(file.filename)[1].lower()
+        image_exts = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        doc_exts   = ['.pdf', '.pptx', '.ppt', '.docx', '.doc']
+        if ext in image_exts:
+            max_size = 5 * 1024 * 1024
+            attachment_type = 'image'
+        elif ext in doc_exts:
+            max_size = 10 * 1024 * 1024
+            attachment_type = 'document'
+        else:
+            return render_template_string(ERROR_PAGE,
+                message="Invalid file type. Allowed: images, GIF, PDF, PPTX, DOCX",
+                back_page="/admin/dashboard")
+        file.seek(0, 2); size = file.tell(); file.seek(0)
+        if size > max_size:
+            limit = '5MB' if attachment_type == 'image' else '10MB'
+            return render_template_string(ERROR_PAGE,
+                message=f"File too large. Max {limit} for {attachment_type}s.",
+                back_page="/admin/dashboard")
+        import time
+        folder = os.path.join(app.root_path, 'static', 'uploads', 'announcements')
+        os.makedirs(folder, exist_ok=True)
+        fname = f"ann_{int(time.time())}{ext}"
+        file.save(os.path.join(folder, fname))
+        attachment_path = f"/static/uploads/announcements/{fname}"
+        attachment_name = file.filename
+
+    add_announcement(title, content, session['admin_name'],
+                     attachment_path, attachment_type, attachment_name)
     return redirect('/admin/dashboard')
 
 
+# ══════════════════════════════════════════
+# ROUTE — STUDENT DOWNLOAD ATTACHMENT
+# ══════════════════════════════════════════
+@app.route('/admin/download-attachment/<int:ann_id>')
+def admin_download_attachment(ann_id):
+    from flask import send_file, abort
+    import sqlite3 as _sq
+
+    conn = _sq.connect('database.db', timeout=10)
+    conn.row_factory = _sq.Row
+    row = conn.execute(
+        "SELECT attachment_path, attachment_name FROM announcements WHERE id = ?",
+        (ann_id,)
+    ).fetchone()
+    conn.close()
+
+    if not row or not row['attachment_path']:
+        abort(404)
+
+    rel_path = row['attachment_path'].lstrip('/')
+    abs_path = os.path.join(app.root_path, rel_path)
+
+    if not os.path.exists(abs_path):
+        abort(404)
+
+    original_name = row['attachment_name'] or os.path.basename(abs_path)
+
+    return send_file(
+        abs_path,
+        as_attachment=True,
+        download_name=original_name
+    )
+
+@app.route('/student/download-attachment/<int:ann_id>')
+def student_download_attachment(ann_id):
+    from flask import send_file, abort
+    import sqlite3 as _sq
+
+    conn = _sq.connect('database.db', timeout=10)
+    conn.row_factory = _sq.Row
+    row = conn.execute(
+        "SELECT attachment_path, attachment_name FROM announcements WHERE id = ?",
+        (ann_id,)
+    ).fetchone()
+    conn.close()
+
+    if not row or not row['attachment_path']:
+        abort(404)
+
+    rel_path = row['attachment_path'].lstrip('/')
+    abs_path = os.path.join(app.root_path, rel_path)
+
+    if not os.path.exists(abs_path):
+        abort(404)
+
+    original_name = row['attachment_name'] or os.path.basename(abs_path)
+
+    return send_file(
+        abs_path,
+        as_attachment=True,
+        download_name=original_name
+    )
+
+@app.route('/admin/notifications', methods=['GET'])
+def admin_get_notifications():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    conn = _sqlite3.connect('database.db', timeout=10)
+    conn.row_factory = _sqlite3.Row
+    conn.execute("""CREATE TABLE IF NOT EXISTS admin_notif_reads
+        (res_id INTEGER PRIMARY KEY, read_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+    rows = conn.execute("""
+        SELECT r.id, r.idNumber, r.purpose, r.lab, r.pc_number,
+               r.time_in, r.date, r.status, r.created_at,
+               s.firstName, s.lastName
+        FROM reservations r
+        JOIN students s ON r.idNumber = s.idNumber
+        ORDER BY r.created_at DESC LIMIT 25
+    """).fetchall()
+    read_ids = {r['res_id'] for r in
+        conn.execute("SELECT res_id FROM admin_notif_reads").fetchall()}
+    conn.close()
+    result = []
+    for r in rows:
+        result.append({
+            'id': r['id'], 'name': f"{r['firstName']} {r['lastName']}",
+            'idNumber': r['idNumber'], 'purpose': r['purpose'],
+            'lab': r['lab'], 'pc': r['pc_number'], 'time_in': r['time_in'],
+            'date': r['date'], 'status': r['status'],
+            'created_at': r['created_at'], 'unread': r['id'] not in read_ids
+        })
+    unread = sum(1 for n in result if n['unread'])
+    return jsonify({'notifications': result, 'unread_count': unread})
+
+
+@app.route('/admin/notifications/mark-read', methods=['POST'])
+def admin_mark_notif_read():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    conn = _sqlite3.connect('database.db', timeout=10)
+    conn.execute("""CREATE TABLE IF NOT EXISTS admin_notif_reads
+        (res_id INTEGER PRIMARY KEY, read_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+    conn.execute("INSERT OR IGNORE INTO admin_notif_reads (res_id) SELECT id FROM reservations")
+    conn.commit(); conn.close()
+    return jsonify({'success': True})
 # ══════════════════════════════════════════
 # ROUTE — ADMIN EDIT ANNOUNCEMENT (AJAX)
 # ══════════════════════════════════════════
@@ -1253,13 +1452,11 @@ def admin_get_available_pcs():
     conn = _sqlite3.connect('database.db', timeout=10)
     # Only block PCs where reservation starts within 30 minutes or already started
     reserved_rows = conn.execute("""
-        SELECT pc_number FROM reservations
-        WHERE lab=? AND date=? 
-        AND status IN ('pending', 'approved', 'sitting_in')
-        AND time_in <= ?
-    """, (lab, today, 
-          (datetime.now(PH_TZ) + timedelta(minutes=30)).strftime('%H:%M')
-    )).fetchall()
+    SELECT pc_number FROM reservations
+    WHERE lab=? AND date=? 
+    AND status IN ('pending', 'approved', 'sitting_in')
+    AND time_in <= ?
+""", (lab, today, now_str)).fetchall()
     conn.close()
 
     reserved_soon = [r[0] for r in reserved_rows]
@@ -1556,7 +1753,7 @@ def student_get_ai_tip():
 
     conn.close()
 
-    fmt = lambda d: d.strftime('%b %-d')
+    fmt = lambda d: d.strftime('%b %d').replace(' 0', ' ')
 
     # ── Count future week traffic (reservations + active sessions) ──
     future_week_counts = Counter()
@@ -1682,6 +1879,97 @@ def student_get_ai_tip():
         'top_purpose':    top_purpose,
     }
     return jsonify({'tip': tip})
+
+@app.route('/admin/notifications/get', methods=['GET'])
+def admin_get_notifications_list():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    
+    import sqlite3 as _sq
+    conn = _sq.connect('database.db', timeout=10)
+    conn.row_factory = _sq.Row
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_notif_reads (
+            res_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # ✅ Count ALL unread — not just last 30
+    read_ids = {row['res_id'] for row in
+        conn.execute("SELECT res_id FROM admin_notif_reads").fetchall()}
+    
+    total_unread = conn.execute("""
+        SELECT COUNT(*) FROM reservations
+        WHERE id NOT IN (SELECT res_id FROM admin_notif_reads)
+    """).fetchone()[0]
+    
+    rows = conn.execute("""
+        SELECT r.id, r.idNumber, r.purpose, r.lab, r.pc_number,
+               r.time_in, r.date, r.status, r.created_at,
+               r.message,
+               s.firstName, s.lastName
+        FROM reservations r
+        JOIN students s ON r.idNumber = s.idNumber
+        ORDER BY r.created_at DESC LIMIT 30
+    """).fetchall()
+    conn.close()
+    
+    result = []
+    for r in rows:
+        status = r['status']
+        if status == 'pending':
+            icon = '🔔'; label = 'New Reservation Request'
+        elif status == 'cancelled':
+            icon = '❌'; label = 'Reservation Cancelled'
+        elif status == 'approved':
+            icon = '✅'; label = 'Reservation Approved'
+        elif status == 'rejected':
+            icon = '🚫'; label = 'Reservation Rejected'
+        elif status == 'expired':
+            icon = '⏰'; label = 'Reservation Expired'
+        elif status == 'done':
+            icon = '✔️'; label = 'Reservation Done'
+        else:
+            icon = '📋'; label = 'Reservation Update'
+            
+        result.append({
+            'id': r['id'],
+            'name': f"{r['firstName']} {r['lastName']}",
+            'idNumber': r['idNumber'],
+            'lab': r['lab'],
+            'pc': r['pc_number'],
+            'status': status,
+            'created_at': r['created_at'],
+            'unread': r['id'] not in read_ids,
+            'icon': icon,
+            'label': label,
+        })
+    
+    return jsonify({
+        'notifications': result,
+        'unread_count': total_unread  # ✅ ALL unread, not just last 30
+    })
+
+@app.route('/admin/notifications/mark-all-read', methods=['POST'])
+def admin_mark_all_notif_read():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    import sqlite3 as _sq
+    conn = _sq.connect('database.db', timeout=10)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_notif_reads (
+            res_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        INSERT OR IGNORE INTO admin_notif_reads (res_id)
+        SELECT id FROM reservations
+    """)
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
 
 @app.route('/admin/sitin/evaluate', methods=['POST'])
 def admin_evaluate_sitin():
@@ -1821,6 +2109,27 @@ def public_leaderboard_scores():
 
     scores.sort(key=lambda x: x['final_score'], reverse=True)
     return jsonify({'scores': scores[:10]})
+
+    from datetime import datetime
+
+    sessions_list = []
+    for s in sessions:
+        s = dict(s)
+        duration = '—'
+        if s.get('time_in') and s.get('time_out'):
+            try:
+                for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+                    try:
+                        t_in  = datetime.strptime(s['time_in'].strip(), fmt)
+                        t_out = datetime.strptime(s['time_out'].strip(), fmt)
+                        mins  = max(0, int((t_out - t_in).total_seconds() // 60))
+                        duration = f'{mins} min'
+                        break
+                    except: continue
+            except: pass
+        s['duration'] = duration
+        sessions_list.append(s)
+    sessions = sessions_list
 # ══════════════════════════════════════════
 # ROUTE — ADMIN LOGOUT
 # ══════════════════════════════════════════

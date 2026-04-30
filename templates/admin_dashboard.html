@@ -9,6 +9,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
+    html {
+        zoom: 0.85;
+        overflow-x: hidden;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; }
         body {
             background-color: #f5f7fb !important;
             background-image:
@@ -18,13 +25,12 @@
             background-attachment: fixed !important;
         }
         footer {
-            margin-top: auto;
-            background-color: #0F3E7D;
-            padding: 1rem 0;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-            text-align: center;
-            color: white;
-            font-size: 0.85rem;
+            margin-left: 240px;
+            transition: margin-left 0.3s ease;
+            background: white !important;
+            backdrop-filter: none !important;
+            border-top: 1px solid #E8EAED !important;
+            color: #555 !important;
         }
 
         .page-section        { display: none; }
@@ -51,7 +57,6 @@
         .ham-dropdown a.ham-logout:hover { background: #fdecea; }
 
         .admin-wrapper { display: block; flex: 1; }
-        .admin-sidebar { display: none !important; }
         .admin-main { padding: 2rem 2.5rem; background: transparent; min-height: 100%; }
         .admin-section-title { font-size: 1.2rem; font-weight: 800; color: #0F3E7D; margin: 0 0 1.4rem; padding-bottom: 0.6rem; border-bottom: 3px solid #F4B942; display: inline-block; }
         .admin-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: stretch; }
@@ -339,13 +344,14 @@
     -webkit-backdrop-filter: blur(20px) !important;
     border-bottom: 1px solid rgba(255,255,255,0.18) !important;
     box-shadow: 0 2px 24px rgba(10,30,80,0.25) !important;
+    overflow: visible !important;
 }
 
 footer {
-    background: linear-gradient(135deg, #0a1e50, #0F3E7D) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border-top: 1px solid rgba(255,255,255,0.15) !important;
+    background: white !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-top: 1px solid #E8EAED !important;
 }
 
 /* ── iOS-feel Buttons ── */
@@ -829,132 +835,620 @@ body { visibility: hidden; }
 #labScoreTable td {
     text-align: center !important;
 }
+
+/* ═══════════ SIDEBAR ═══════════ */
+.admin-sidebar {
+    width: 240px;
+    height: calc(100vh / 0.8);
+    background: #0F3E7D;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 24px rgba(15,62,125,0.15);
+    transition: none;
+    overflow: hidden;   /* KEEP THIS AS IS */
+}
+.admin-sidebar.collapsed { transform: translateX(-240px); }
+
+.sidebar-logo-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    min-height: 75px;
+    flex-shrink: 0;
+}
+.sidebar-logo-img {
+    width: 70px;
+    height: 70px;
+    margin-top: -20px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #F4B942;
+    flex-shrink: 0;
+}
+.sidebar-school-name {
+    font-size: 10px;
+    color: rgba(255,255,255,0.9);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+}
+.sidebar-system-name {
+    font-size: 9px;
+    color: rgba(255,255,255,0.5);
+}
+.sidebar-nav {
+    flex: 1;
+    padding: 10px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    height: 48px;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    font-family: 'Inter','Segoe UI',Arial,sans-serif;
+    user-select: none;
+}
+.sidebar-item:hover {
+    color: white;
+    background: rgba(255,255,255,0.08);
+}
+.sidebar-item.active {
+    color: white;
+    background: rgba(244,185,66,0.15);
+    border-left: 3px solid #F4B942;
+}
+.sidebar-item svg { flex-shrink: 0; }
+
+.sidebar-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 0;
+    flex-shrink: 0;
+}
+.sidebar-item.sidebar-logout {
+    color: #ff8a80;
+}
+.sidebar-item.sidebar-logout:hover {
+    background: rgba(255,100,100,0.1);
+    color: #ffab91;
+}
+
+/* ═══════════ TOPBAR ═══════════ */
+.navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 240px !important;
+    right: 0 !important;
+    height: 60px !important;
+    background: white !important;              /* ← was gradient blue */
+    border-bottom: 1px solid #E8EAED !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    z-index: 1000 !important;
+    padding: 0 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;              /* ← CRITICAL: never hide */
+    box-sizing: border-box !important;
+    transition: left 0.3s ease !important;
+}
+.navbar.sidebar-collapsed {
+    left: 0 !important;
+    right: 0 !important;
+}
+/* topbar title colors switch to dark since bg is now white */
+.topbar-subtitle { color: #9CA3AF; }
+.topbar-pagetitle { color: #0F3E7D; }
+.topbar-toggle { color: #0F3E7D; }
+#adminTopbar .topbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    white-space: nowrap !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.nav-content {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    gap: 16px !important;
+    padding: 0 !important;
+    max-width: none !important;
+    flex-wrap: nowrap !important;
+    overflow: visible !important;
+}
+
+.topbar-title-block {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.topbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    white-space: nowrap !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+.navbar.sidebar-collapsed { left: 0 !important; }
+
+.nav-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    height: 100% !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+}
+.topbar-toggle {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #0F3E7D;
+    transition: background 0.18s;
+    flex-shrink: 0;
+}
+.topbar-toggle:hover { background: #F5F6FA; }
+.topbar-title-block { display: flex; flex-direction: column; gap: 1px; }
+.topbar-subtitle { font-size: 11px; color: #9CA3AF; font-weight: 500; }
+.topbar-pagetitle { font-size: 16px; font-weight: 800; color: #0F3E7D; line-height: 1; }
+.topbar-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #0F3E7D;
+    color: #F4B942;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    flex-shrink: 0;
+}
+
+.topbar-username,
+.topbar-role {
+    white-space: nowrap !important;
+}
+.topbar-username { font-size: 13px; font-weight: 700; color: #111827; line-height: 1.2; }
+.topbar-role { font-size: 11px; color: #9CA3AF; }
+
+/* ═══════════ LAYOUT ADJUSTMENT ═══════════ */
+.admin-wrapper {
+    display: block !important;
+    margin-left: 240px;
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+    background: #F5F6FA;
+    transition: none;
+}
+.admin-wrapper.sidebar-collapsed { margin-left: 0; }
+
+.admin-main {
+    padding: 24px 28px;
+    background: transparent;
+    min-height: 100%;
+}
+
+footer {
+    margin-left: 240px;
+    transition: margin-left 0.3s ease;
+    background: white !important;
+    backdrop-filter: none !important;
+    border-top: 1px solid #E8EAED !important;
+    color: #555 !important;
+}
+footer.sidebar-collapsed { margin-left: 0; }
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+/* Stat Cards */
+.home-stat-card {
+    background:white;border-radius:16px;padding:0.85rem 1.1rem;
+    display:flex;align-items:center;gap:1rem;cursor:pointer;
+    box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.05);
+    transition:all 0.2s ease;
+}
+.home-stat-card:hover { transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.12); }
+.home-stat-icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+
+/* Admin Notification Bell */
+.admin-notif-btn {
+    position: relative;
+    background: white;                        /* ← WHITE not grey */
+    border: none;
+    border-radius: 14px;                      /* ← ROUNDED SQUARE not circle */
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #444;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12),
+                0 1px 0 rgba(255,255,255,1) inset;  /* ← floating card shadow */
+    transition: all 0.18s ease;
+}
+.admin-notif-btn:hover {
+    transform: translateY(-2px);              /* ← lifts up on hover */
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15),
+                0 1px 0 rgba(255,255,255,1) inset;
+    background: white;
+}
+.admin-notif-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: #333;
+}
+.admin-notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #e74c3c;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    line-height: 1;
+    padding: 0 2px;
+}
+.admin-notif-btn:hover { background:#f0f5ff;color:#0F3E7D; }
+.admin-notif-badge { position:absolute;top:-4px;right:-4px;background:#e74c3c;color:white;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;line-height:1;padding:0 2px; }
+.admin-notif-drop { display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:6000;overflow:hidden;border:1px solid rgba(0,0,0,0.08);animation:dropIn 0.18s ease; }
+.admin-notif-drop.open { display:block; }
+.admin-notif-item { display:flex;align-items:flex-start;gap:10px;padding:0.8rem 1rem;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background 0.15s; }
+.admin-notif-item:hover { background:#f8faff; }
+.admin-notif-item.unread { background:#eef3fb; }
+.topbar-right,
+#adminTopbar .topbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    white-space: nowrap !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 1010 !important;    /* ← above topbar so never hidden */
+    overflow: visible !important;
+}
+
+/* admin username / role — dark text on white bg */
+.topbar-username { color: #111827; }
+.topbar-role     { color: #9CA3AF; }
 </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="nav-content">
-            <a href="/admin/dashboard" class="logo-section" style="text-decoration:none;" onclick="localStorage.setItem('adminSection','section-home')">
-                <img src="{{ url_for('static', filename='images/ucmainccslogo.jpg') }}" alt="CCS Logo" class="navbar-logo">
-                <span class="site-title">College of Computer Studies Sit-in Monitoring System</span>
-            </a>
-            <div class="admin-nav-right">
-                <span class="admin-name-display">{{ session['admin_name'] }}</span>
-                <button class="hamburger-btn" id="adminHamBtn" onclick="toggleAdminHam()" aria-label="Menu">
-                    <span class="bar"></span><span class="bar"></span><span class="bar"></span>
-                </button>
-                <div class="ham-dropdown" id="adminHamDrop">
-                    <a class="ham-active" onclick="showSection('section-home', this)">HOME</a>
-                    <a onclick="openSearchModal(); closeAdminHam();">SEARCH</a>
-                    <a onclick="showSection('section-students', this)">STUDENTS</a>
-                    <a onclick="showSection('section-sitin', this)">SIT-IN</a>
-                    <a onclick="showSection('section-records', this)">SIT-IN RECORDS</a>
-                    <a onclick="showSection('section-reports', this)">SIT-IN REPORTS</a>
-                    <a onclick="showSection('section-feedback', this)">FEEDBACK REPORTS</a>
-                    <a onclick="showSection('section-reservation', this)">RESERVATION</a>
-                    <a onclick="confirmAdminLogout()" class="ham-logout">LOGOUT</a>
-                </div>
-            </div>
+    <nav class="navbar" id="adminTopbar">
+    <div class="nav-content">
+        <button class="topbar-toggle" onclick="toggleSidebar()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        </button>
+        <div class="topbar-title-block" onclick="showSection('section-home',null)" style="cursor:pointer;">
+            <span class="topbar-subtitle">College of Computer Studies</span>
+            <span class="topbar-pagetitle">Sit-in Monitoring System</span>
         </div>
-    </nav>
+<div class="topbar-right" style="position:relative;">
+
+    <!-- ✅ ADD THIS BELL BUTTON -->
+    <button class="admin-notif-btn" id="adminNotifBtn" onclick="toggleAdminNotif()">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+    </svg>
+    <!-- ✅ Remove style="display:none" so it shows immediately -->
+    <span class="admin-notif-badge" id="adminNotifBadge" style="display:none;">0</span>
+</button>
+
+    <div class="admin-notif-drop" id="adminNotifDrop">
+    <div style="background:#0F3E7D;color:white;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:0.9rem;font-weight:700;">Reservation Notifications</span>
+        <button onclick="adminMarkAllRead()" style="background:none;border:none;color:#F4B942;font-size:0.78rem;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">Mark all read</button>
+    </div>
+    <div id="adminNotifList" style="max-height:380px;overflow-y:auto;">
+        <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">Loading...</div>
+    </div>
+</div>
+    <div class="admin-notif-drop" id="adminNotifDrop">
+        <div style="background:#0F3E7D;color:white;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.9rem;font-weight:700;">Reservation Notifications</span>
+            <button onclick="adminMarkAllRead()" style="background:none;border:none;color:#F4B942;font-size:0.78rem;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">Mark all read</button>
+        </div>
+        <div id="adminNotifList" style="max-height:380px;overflow-y:auto;">
+            <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">Loading...</div>
+        </div>
+    </div>
+    <div style="position:relative;" id="adminAvatarWrap">
+    <div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 10px;border-radius:12px;transition:background 0.18s;" 
+         onclick="toggleAdminAvatarDrop()"
+         onmouseover="this.style.background='#F5F6FA'" 
+         onmouseout="this.style.background='transparent'">
+        <div class="topbar-avatar">{{ session['admin_name'][:2].upper() if session['admin_name'] else 'AD' }}</div>
+        <div>
+            <div class="topbar-username">{{ session['admin_name'] }}</div>
+            <div class="topbar-role">Administrator</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#9CA3AF" style="flex-shrink:0;"><path d="M7 10l5 5 5-5z"/></svg>
+    </div>
+    <div id="adminAvatarDrop" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:200px;background:white;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.08);overflow:hidden;z-index:9999;animation:dropIn 0.18s ease;">
+        <div style="padding:1rem 1.1rem;border-bottom:1px solid #f0f0f0;">
+            <div style="font-size:0.88rem;font-weight:700;color:#111;">{{ session['admin_name'] }}</div>
+            <div style="font-size:0.78rem;color:#9CA3AF;">Administrator</div>
+        </div>
+        <div onclick="confirmAdminLogout()" style="display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1.1rem;cursor:pointer;color:#c0392b;font-size:0.88rem;font-weight:700;transition:background 0.15s;" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='white'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#c0392b"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            Logout
+        </div>
+    </div>
+</div>
+</div>
+    </div>
+    <!-- KEEP BELOW — needed for JS compatibility, do not remove -->
+    <button class="hamburger-btn" id="adminHamBtn" style="display:none!important;" onclick="toggleAdminHam()">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    <div class="ham-dropdown" id="adminHamDrop" style="display:none!important;pointer-events:none;position:absolute;top:0;left:0;">
+        <a class="ham-active" onclick="showSection('section-home', this)">HOME</a>
+        <a onclick="openSearchModal(); closeAdminHam();">SEARCH</a>
+        <a onclick="showSection('section-students', this)">STUDENTS</a>
+        <a onclick="showSection('section-sitin', this)">SIT-IN</a>
+        <a onclick="showSection('section-records', this)">SIT-IN RECORDS</a>
+        <a onclick="showSection('section-reports', this)">SIT-IN REPORTS</a>
+        <a onclick="showSection('section-feedback', this)">FEEDBACK REPORTS</a>
+        <a onclick="showSection('section-reservation', this)">RESERVATION</a>
+        <a onclick="confirmAdminLogout()" class="ham-logout">LOGOUT</a>
+    </div>
+</nav>
 
     <div class="admin-wrapper">
-        <aside class="admin-sidebar" aria-hidden="true"></aside>
+        <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo-area" style="justify-content:center;">
+        <img src="{{ url_for('static', filename='images/ucmainccslogo.jpg') }}" alt="Logo" class="sidebar-logo-img" onclick="showSection('section-home',null)" style="cursor:pointer;">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-item active" id="slink-home" onclick="showSection('section-home', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>Dashboard</span>
+        </div>
+        <div class="sidebar-item" id="slink-search" onclick="openSearchModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span>Search</span>
+        </div>
+        <div class="sidebar-item" id="slink-students" onclick="showSection('section-students', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            <span>Students</span>
+        </div>
+        <div class="sidebar-item" id="slink-sitin" onclick="showSection('section-sitin', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+            <span>Sit-in</span>
+        </div>
+        <div class="sidebar-item" id="slink-records" onclick="showSection('section-records', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span>Sit-in Records</span>
+        </div>
+        <div class="sidebar-item" id="slink-reports" onclick="showSection('section-reports', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+            <span>Sit-in Reports</span>
+        </div>
+        <div class="sidebar-item" id="slink-feedback" onclick="showSection('section-feedback', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <span>Feedback Reports</span>
+        </div>
+        <div class="sidebar-item" id="slink-reservation" onclick="showSection('section-reservation', this)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+            <span>Reservation</span>
+        </div>
+    </nav>
+</aside>
         <main class="admin-main">
             {% if request.args.get('loggedin') %}
             <div id="loginSuccessToast" style="position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#1e7e34; color:white; padding:0.85rem 1.8rem; border-radius:8px; font-size:0.92rem; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,0.2); z-index:9999; white-space:nowrap;">
                 ✓ Logged in successfully!
             </div>
             <script>
-                localStorage.removeItem('adminSection');
+                
                 history.replaceState(null, '', '/admin/dashboard');
                 setTimeout(() => { const t = document.getElementById('loginSuccessToast'); if (t) t.style.display = 'none'; }, 3000);
             </script>
             {% endif %}
 
             <!-- HOME -->
-            <div id="section-home" class="page-section active">
-                <h2 class="admin-section-title">Dashboard</h2>
-                <div class="admin-dashboard-grid">
-                    <div class="admin-stat-panel">
-                        <div class="admin-panel-header stat-header">Statistics</div>
-                        <div class="admin-panel-body">
-                        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.2rem;">
-                        <div style="background:#E6F1FB;border-radius:10px;padding:14px 16px;">
-                            <p style="font-size:11px;color:#185FA5;margin:0 0 6px;font-weight:700;">Students Registered</p>
-                            <p style="font-size:28px;font-weight:700;color:#0C447C;margin:0;line-height:1;">{{ students|length }}</p>
-                            <p style="font-size:11px;color:#185FA5;margin:4px 0 0;">Total registered</p>
-                        </div>
-                        <div style="background:#E6F1FB;border-radius:10px;padding:14px 16px;">
-                            <p style="font-size:11px;color:#185FA5;margin:0 0 6px;font-weight:700;">Currently Sit-in</p>
-                            <p style="font-size:28px;font-weight:700;color:#0C447C;margin:0;line-height:1;">{{ sessions|selectattr('status','equalto','active')|list|length }}</p>
-                            <p style="font-size:11px;color:#185FA5;margin:4px 0 0;">Active now</p>
-                        </div>
-                        <div style="background:#E6F1FB;border-radius:10px;padding:14px 16px;">
-                            <p style="font-size:11px;color:#185FA5;margin:0 0 6px;font-weight:700;">Total Sit-in</p>
-                            <p style="font-size:28px;font-weight:700;color:#0C447C;margin:0;line-height:1;">{{ sessions|length }}</p>
-                            <p style="font-size:11px;color:#185FA5;margin:4px 0 0;">All sessions</p>
-                        </div>
-                    </div>
-                            <div class="donut-wrap" style="width:280px;height:280px;margin-top:0.75rem;">
-                                <canvas id="sitinPieChart"></canvas>
-                                <div class="donut-center">
-                                    <div class="donut-center-val" id="sitinPieVal">—</div>
-                                    <div class="donut-center-lbl" id="sitinPieLbl">total sessions</div>
-                                </div>
-                            </div>
-                            <div class="donut-legend" id="sitinPieLegend"></div>
-                        </div>
-                    </div>
+<div id="section-home" class="page-section active">
 
-                    <div class="admin-ann-panel">
-                        <div class="admin-panel-header ann-header">Announcement</div>
-                        <div class="admin-panel-body">
-                            <div class="ann-form-wrap">
-                                <textarea id="newAnnContent" rows="3" placeholder="New Announcement..." style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:5px;font-size:0.88rem;resize:vertical;font-family:inherit;box-sizing:border-box;"></textarea>
-                                <div class="ann-form-row">
-                                    <input type="text" id="newAnnTitle" placeholder="Title..." style="flex:1;padding:0.5rem 0.7rem;border:1px solid #ddd;border-radius:5px;font-size:0.88rem;">
-                                    <form action="/admin/announcement/add" method="post" id="annForm" style="display:inline;">
-                                        <input type="hidden" name="title" id="annTitleHidden">
-                                        <input type="hidden" name="content" id="annContentHidden">
-                                        <button type="button" class="btn-submit-ann" onclick="submitAnn()">Submit</button>
-                                    </form>
-                                </div>
-                            </div>
-                            <h4 class="posted-ann-title">Posted Announcements</h4>
-                            <div class="posted-ann-list" id="adminAnnList">
-                                {% for a in announcements %}
-                                <div class="posted-ann-item {% if a.is_pinned %}is-pinned{% endif %}" id="ann-item-{{ a.id }}" data-id="{{ a.id }}" data-pinned="{{ a.is_pinned }}">
-                                    <div class="ann-item-top">
-                                        <div class="ann-item-title-wrap">
-                                            <div class="ann-item-title-row">
-                                                <span class="ann-item-title" id="ann-title-{{ a.id }}">{{ a.title }}</span>
-                                                {% if a.is_pinned %}<span class="ann-pin-badge" id="ann-pin-badge-{{ a.id }}">📌 Pinned</span>{% else %}<span class="ann-pin-badge" id="ann-pin-badge-{{ a.id }}" style="display:none;">📌 Pinned</span>{% endif %}
-                                            </div>
-                                            <div class="posted-ann-meta">{{ a.posted_by }} | {{ a.created_at.split(' ')[0] }} {{ a.created_at.split(' ')[1] | timeformat if a.created_at and ' ' in a.created_at else '' }}</div>
-                                        </div>
-                                        <div class="ann-menu-wrap" data-ann-id="{{ a.id }}">
-                                            <button class="ann-menu-btn" data-ann-id="{{ a.id }}" title="Options">⋯</button>
-                                            <div class="ann-menu-dropdown" id="ann-menu-{{ a.id }}">
-                                                <div class="ann-menu-item ann-action-edit" data-ann-id="{{ a.id }}">Edit</div>
-                                                <div class="ann-menu-item ann-action-pin" id="ann-pin-btn-{{ a.id }}" data-ann-id="{{ a.id }}">
-                                                    <span id="ann-pin-label-{{ a.id }}">{% if a.is_pinned %}Unpin{% else %}Pin{% endif %}</span>
-                                                </div>
-                                                <div class="ann-menu-item delete ann-action-delete" data-ann-id="{{ a.id }}">Delete</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% if a.content %}<p class="posted-ann-body" id="ann-body-{{ a.id }}">{{ a.content }}</p>{% else %}<p class="posted-ann-body" id="ann-body-{{ a.id }}"></p>{% endif %}
-                                </div>
-                                {% else %}
-                                <p class="no-data" id="ann-empty-msg">No announcements yet.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
+    <!-- Welcome Banner -->
+    <div style="margin-bottom:1rem;">
+    <h2 style="color:#111;margin:0 0 0.2rem;font-size:1.05rem;font-weight:800;">Welcome back, {{ session['admin_name'] }}! 👋</h2>
+    <p style="color:#9CA3AF;margin:0;font-size:0.82rem;">Here's what's happening with the sit-in sessions today.</p>
+</div>
+
+    <!-- Stat Cards -->
+    {% set active_count = sessions|selectattr('status','equalto','active')|list|length %}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:1.5rem;">
+        <div class="home-stat-card" onclick="showSection('section-students',null)">
+            <div class="home-stat-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            </div>
+            <div style="flex:1;">
+                <p style="font-size:0.75rem;color:#888;font-weight:700;margin:0 0 0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Students Registered</p>
+                <p style="font-size:1.5rem;font-weight:800;color:#111;margin:0;line-height:1;">{{ students|length }}</p>
+                <p style="font-size:0.78rem;color:#6366f1;margin:0.25rem 0 0;font-weight:600;">Total registered</p>
+            </div>
+            <span style="color:#ccc;font-size:1.2rem;">›</span>
+        </div>
+
+        <div class="home-stat-card" onclick="showSection('section-sitin',null)">
+            <div class="home-stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+            </div>
+            <div style="flex:1;">
+                <p style="font-size:0.75rem;color:#888;font-weight:700;margin:0 0 0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Currently Sit-in</p>
+                <p style="font-size:2rem;font-weight:800;color:#111;margin:0;line-height:1;">{{ active_count }}</p>
+                <p style="font-size:0.78rem;color:#10b981;margin:0.25rem 0 0;font-weight:600;">Active now</p>
+            </div>
+            <span style="color:#ccc;font-size:1.2rem;">›</span>
+        </div>
+
+        <div class="home-stat-card" onclick="showSection('section-records',null)">
+            <div class="home-stat-icon" style="background:linear-gradient(135deg,#3b82f6,#2563eb);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            </div>
+            <div style="flex:1;">
+                <p style="font-size:0.75rem;color:#888;font-weight:700;margin:0 0 0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Total Sit-in</p>
+                <p style="font-size:2rem;font-weight:800;color:#111;margin:0;line-height:1;">{{ sessions|length }}</p>
+                <p style="font-size:0.78rem;color:#3b82f6;margin:0.25rem 0 0;font-weight:600;">All sessions</p>
+            </div>
+            <span style="color:#ccc;font-size:1.2rem;">›</span>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:stretch;">
+
+        <!-- Sit-in Overview -->
+        <div style="background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.05);overflow:hidden;">
+            <div style="padding:1.1rem 1.4rem;border-bottom:1px solid #f0f0f0;">
+                <h3 style="margin:0;font-size:0.95rem;font-weight:800;color:#111;">Sit-in Overview</h3>
+            </div>
+            <div style="padding:1.25rem;display:flex;align-items:center;gap:1.5rem;">
+                <div class="donut-wrap" style="width:180px;height:180px;flex-shrink:0;">
+                    <canvas id="sitinPieChart"></canvas>
+                    <div class="donut-center">
+                        <div class="donut-center-val" id="sitinPieVal">—</div>
+                        <div class="donut-center-lbl" id="sitinPieLbl">total sessions</div>
                     </div>
                 </div>
+                <div class="donut-legend" id="sitinPieLegend" style="flex:1;"></div>
             </div>
+        </div>
+
+        <!-- Announcements -->
+        <div style="background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.05);overflow:hidden;display:flex;flex-direction:column;height:100%;">
+            <div style="padding:1.1rem 1.4rem;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;">
+    <h3 style="margin:0;font-size:0.95rem;font-weight:800;color:#111;">Announcements</h3>
+    <button onclick="showModal('softwareAvailModal')" style="
+        background: linear-gradient(135deg, #1a5db5, #0F3E7D);
+        color: white;
+        border: none;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        letter-spacing: 0.03em;
+        box-shadow: 0 3px 10px rgba(255,45,135,0.35);
+        transition: all 0.22s ease;
+    "
+    onmouseover="this.style.transform='translateY(-3px) scale(1.06)';this.style.boxShadow='0 6px 20px rgba(15,62,125,0.55), 0 0 12px rgba(26,93,181,0.4)'"
+onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(15,62,125,0.35)'">
+        🖥️ Software Availability per Lab
+    </button>
+</div>
+            <div style="padding:1.1rem 1.25rem;border-bottom:1px solid #f5f5f5;">
+                <textarea id="newAnnContent" rows="3" placeholder="Write a new announcement..." style="width:100%;padding:0.65rem 0.8rem;border:1.5px solid #e8e8e8;border-radius:10px;font-size:0.88rem;resize:vertical;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0F3E7D'" onblur="this.style.borderColor='#e8e8e8'"></textarea>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;align-items:center;">
+                    <input type="text" id="newAnnTitle" placeholder="Title..." style="flex:1;padding:0.5rem 0.7rem;border:1.5px solid #e8e8e8;border-radius:8px;font-size:0.88rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0F3E7D'" onblur="this.style.borderColor='#e8e8e8'">
+                    <!-- Attach button -->
+                    <label title="Image/GIF max 5MB · PDF/PPTX/DOCX max 10MB" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1.5px solid #e8e8e8;border-radius:8px;cursor:pointer;flex-shrink:0;transition:all 0.18s;" onmouseover="this.style.borderColor='#0F3E7D'" onmouseout="this.style.borderColor='#e8e8e8'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#888"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+                        <input type="file" id="annFileInputVis" accept="image/*,.gif,.pdf,.pptx,.ppt,.docx,.doc" style="display:none;" onchange="onAnnFileSelect(this)">
+                    </label>
+                    <form action="/admin/announcement/add" method="post" id="annForm" enctype="multipart/form-data" style="display:inline;">
+                        <input type="hidden" name="title" id="annTitleHidden">
+                        <input type="hidden" name="content" id="annContentHidden">
+                        <input type="file" name="attachment" id="annFileInput" style="display:none;" accept="image/*,.gif,.pdf,.pptx,.ppt,.docx,.doc">
+                        <button type="button" class="btn-submit-ann" onclick="submitAnn()" style="background:#0F3E7D;color:white;border:none;padding:0.5rem 1.1rem;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">Post</button>
+                    </form>
+                </div>
+                <div id="annFilePreview" style="display:none;margin-top:0.4rem;padding:0.35rem 0.75rem;background:#f0f5ff;border-radius:8px;font-size:0.78rem;color:#0F3E7D;align-items:center;gap:0.5rem;">
+                    📎 <span id="annFilePreviewName"></span>
+                    <button onclick="clearAnnFile()" style="background:none;border:none;cursor:pointer;color:#c0392b;margin-left:auto;line-height:1;font-size:0.9rem;">✕</button>
+                </div>
+            </div>
+            <div class="posted-ann-list" id="adminAnnList" style="flex:1;overflow-y:auto;max-height:220px;padding:0.75rem 1.25rem;">
+                {% for a in announcements %}
+                <div class="posted-ann-item {% if a.is_pinned %}is-pinned{% endif %}" id="ann-item-{{ a.id }}" data-id="{{ a.id }}" data-pinned="{{ a.is_pinned }}">
+                    <div class="ann-item-top">
+                        <div class="ann-item-title-wrap">
+                            <div class="ann-item-title-row">
+                                <span class="ann-item-title" id="ann-title-{{ a.id }}">{{ a.title }}</span>
+                                {% if a.is_pinned %}<span class="ann-pin-badge" id="ann-pin-badge-{{ a.id }}">📌 Pinned</span>{% else %}<span class="ann-pin-badge" id="ann-pin-badge-{{ a.id }}" style="display:none;">📌 Pinned</span>{% endif %}
+                                {% if a.attachment_name %}
+                                <span style="background:#e8f0fb;color:#0F3E7D;font-size:0.68rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:8px;">📎 {{ a.attachment_name.split('.')[-1].upper() if a.attachment_name else '' }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="posted-ann-meta">{{ a.posted_by }} | {{ a.created_at.split(' ')[0] }} {{ a.created_at.split(' ')[1] | timeformat if a.created_at and ' ' in a.created_at else '' }}</div>
+                        </div>
+                        <div class="ann-menu-wrap" data-ann-id="{{ a.id }}">
+                            <button class="ann-menu-btn" data-ann-id="{{ a.id }}" title="Options">⋯</button>
+                            <div class="ann-menu-dropdown" id="ann-menu-{{ a.id }}">
+                                <div class="ann-menu-item ann-action-edit" data-ann-id="{{ a.id }}">Edit</div>
+                                <div class="ann-menu-item ann-action-pin" id="ann-pin-btn-{{ a.id }}" data-ann-id="{{ a.id }}">
+                                    <span id="ann-pin-label-{{ a.id }}">{% if a.is_pinned %}Unpin{% else %}Pin{% endif %}</span>
+                                </div>
+                                <div class="ann-menu-item delete ann-action-delete" data-ann-id="{{ a.id }}">Delete</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if a.content %}<p class="posted-ann-body" id="ann-body-{{ a.id }}">{{ a.content }}</p>{% else %}<p class="posted-ann-body" id="ann-body-{{ a.id }}"></p>{% endif %}
+                    {% if a.attachment_path %}
+                    <div style="margin-top:0.4rem;">
+                        <a href="/admin/download-attachment/{{ a.id }}"
+                            onclick="event.preventDefault(); confirmDownload('/admin/download-attachment/{{ a.id }}', '{{ a.attachment_name }}')" style="display:inline-flex;align-items:center;gap:5px;background:#f0f5ff;color:#0F3E7D;font-size:0.78rem;font-weight:700;padding:0.3rem 0.75rem;border-radius:8px;text-decoration:none;border:1px solid rgba(15,62,125,0.12);transition:background 0.15s;" onmouseover="this.style.background='#e0ecff'" onmouseout="this.style.background='#f0f5ff'">
+                            📎 {{ a.attachment_name }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="no-data" id="ann-empty-msg">No announcements yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- SEARCH -->
             <div id="section-search" class="page-section">
@@ -2032,6 +2526,57 @@ body { visibility: hidden; }
     </div>
 </div>
 
+<!-- SW PDF Confirm Modal -->
+<!-- SW PDF Confirm Modal -->
+<div class="modal-overlay" id="confirmSwPDFModal" style="display:none; z-index:10000;">
+    <div style="background:linear-gradient(145deg,rgba(255,255,255,0.92),rgba(255,251,235,0.88));backdrop-filter:blur(40px);border-radius:28px;width:90%;max-width:400px;border:2px solid rgba(255,255,255,0.95);box-shadow:0 30px 60px rgba(244,185,66,0.18),6px 6px 0px rgba(244,185,66,0.2);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:white;font-size:1rem;font-weight:800;">📄 Download PDF</span>
+            <button onclick="closeModal('confirmSwPDFModal')" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <div style="padding:1.75rem 2rem;text-align:center;">
+            <div style="width:80px;height:80px;background:linear-gradient(145deg,#e8f0fb,#c7dcff);border-radius:24px;margin:0 auto 1.25rem;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 8px 24px rgba(15,62,125,0.15),0 2px 0 rgba(255,255,255,0.9) inset;border:2px solid rgba(255,255,255,0.9);transform:rotate(-4deg);animation:clayWobble 3s ease-in-out infinite;">📋</div>
+            <p style="color:#2c2c2e;font-size:0.95rem;font-weight:700;margin:0 0 0.4rem;">Download Software Availability PDF?</p>
+            <p style="color:#888;font-size:0.82rem;margin:0 0 1.75rem;line-height:1.5;">This will generate a PDF report of all software listed per laboratory.</p>
+            <div style="display:flex;gap:0.75rem;justify-content:center;">
+                <button onclick="closeModal('confirmSwPDFModal')" style="background:linear-gradient(145deg,#f2f2f7,#e5e5ea);color:#3a3a3c;border:2px solid rgba(255,255,255,0.9);padding:0.7rem 1.5rem;border-radius:16px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all 0.18s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Cancel</button>
+                <button onclick="downloadSwPDFConfirmed()" style="background:linear-gradient(135deg,#1a5db5,#0F3E7D);color:white;border:2px solid rgba(255,255,255,0.25);padding:0.7rem 1.5rem;border-radius:16px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 6px 18px rgba(244,185,66,0.4);transition:all 0.18s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">⬇️ Yes, Download</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Download Confirm Modal -->
+<div class="modal-overlay" id="downloadConfirmModal" style="display:none; z-index:9999;">
+    <div style="
+        background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(240,240,255,0.88));
+        backdrop-filter: blur(40px);
+        border-radius: 28px;
+        width: 90%;
+        max-width: 400px;
+        border: 2px solid rgba(255,255,255,0.95);
+        box-shadow: 0 30px 60px rgba(15,62,125,0.18), 6px 6px 0px rgba(192,132,252,0.15);
+        overflow: hidden;
+    ">
+        <div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:white;font-size:1rem;font-weight:800;">📥 Download File</span>
+            <button onclick="closeModal('downloadConfirmModal')" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <div style="padding:1.75rem 2rem;text-align:center;">
+            <div style="width:80px;height:80px;background:linear-gradient(145deg,#e8f0fb,#c7dcff);border-radius:24px;margin:0 auto 1.25rem;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 8px 24px rgba(15,62,125,0.15),0 2px 0 rgba(255,255,255,0.9) inset;border:2px solid rgba(255,255,255,0.9);transform:rotate(-4deg);">📎</div>
+            <p style="color:#555;font-size:0.82rem;margin:0 0 0.5rem;">You are about to download</p>
+            <p style="color:#0F3E7D;font-size:0.95rem;font-weight:800;margin:0 0 1.75rem;word-break:break-all;" id="downloadFileName">file.pdf</p>
+            <div style="display:flex;gap:0.75rem;justify-content:center;">
+                <button onclick="closeModal('downloadConfirmModal')" style="background:linear-gradient(145deg,#f2f2f7,#e5e5ea);color:#3a3a3c;border:2px solid rgba(255,255,255,0.9);padding:0.7rem 1.5rem;border-radius:16px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all 0.18s;"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Cancel</button>
+                <a id="downloadConfirmLink" href="#" download style="background:linear-gradient(135deg,#1a5db5,#0F3E7D);color:white;border:2px solid rgba(255,255,255,0.2);padding:0.7rem 1.5rem;border-radius:16px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(15,62,125,0.35);transition:all 0.18s;"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"
+                onclick="closeModal('downloadConfirmModal')">📥 Download</a>
+            </div>
+        </div>
+    </div>
+</div>
+
     <div class="modal-overlay" id="sitinModal" style="display:none;">
         <div class="modal-box modal-sm">
             <div class="modal-header"><h3>Sit In Form</h3><button class="modal-close" onclick="closeModal('sitinModal')">&#10005;</button></div>
@@ -3037,6 +3582,13 @@ body { visibility: hidden; }
     <footer><p>&copy; 2026 College of Computer Studies - University of Cebu</p></footer>
 
     <script>
+function confirmDownload(href, filename) {
+            document.getElementById('downloadFileName').textContent = filename;
+            document.getElementById('downloadConfirmLink').href = href;
+            document.getElementById('downloadConfirmLink').setAttribute('download', filename);
+            showModal('downloadConfirmModal');
+        }
+
         const ADMIN_LABELS = {
     'section-home':       'Home',
     'section-students':   'Students',
@@ -3048,6 +3600,35 @@ body { visibility: hidden; }
 };
 
 function showSection(sectionId, clickedLink) {
+    
+ const sidebarMap = {
+        'section-home': 'slink-home',
+        'section-search': 'slink-search',
+        'section-students': 'slink-students',
+        'section-sitin': 'slink-sitin',
+        'section-records': 'slink-records',
+        'section-reports': 'slink-reports',
+        'section-feedback': 'slink-feedback',
+        'section-reservation': 'slink-reservation'
+    };
+    const pageTitleMap = {
+        'section-home': 'Dashboard',
+        'section-search': 'Search Student',
+        'section-students': 'Students',
+        'section-sitin': 'Current Sit-in',
+        'section-records': 'Sit-in Records',
+        'section-reports': 'Sit-in Reports',
+        'section-feedback': 'Feedback Reports',
+        'section-reservation': 'Reservation'
+    };
+    document.querySelectorAll('.sidebar-item').forEach(l => l.classList.remove('active'));
+    if (sidebarMap[sectionId]) {
+        const el = document.getElementById(sidebarMap[sectionId]);
+        if (el) el.classList.add('active');
+    }
+    const titleEl = document.getElementById('adminPageTitle');
+    if (titleEl && pageTitleMap[sectionId]) titleEl.textContent = pageTitleMap[sectionId];
+
     document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
     const target = document.getElementById(sectionId);
     if (target) target.classList.add('active');
@@ -3185,15 +3766,40 @@ function showSection(sectionId, clickedLink) {
         let pendingAnnouncement = null;
 
         function submitAnn() {
-            const title = document.getElementById('newAnnTitle').value.trim();
-            const content = document.getElementById('newAnnContent').value.trim();
-            if (!title || !content) {
-                showModal('annErrorModal');
-                return;
-            }
-            pendingAnnouncement = { title, content };
-            showModal('confirmAnnModal');
-        }
+    const title = document.getElementById('newAnnTitle').value.trim();
+    const content = document.getElementById('newAnnContent').value.trim();
+    if (!title || !content) {
+        showModal('annErrorModal');
+        return;
+    }
+    // Transfer file from visible input to the hidden form input
+    const visFile = document.getElementById('annFileInputVis');
+    const hiddenFile = document.getElementById('annFileInput');
+    if (visFile.files.length > 0) {
+        const dt = new DataTransfer();
+        dt.items.add(visFile.files[0]);
+        hiddenFile.files = dt.files;
+    }
+    pendingAnnouncement = { title, content };
+    showModal('confirmAnnModal');
+}
+
+function onAnnFileSelect(input) {
+    const preview = document.getElementById('annFilePreview');
+    const name = document.getElementById('annFilePreviewName');
+    if (input.files.length > 0) {
+        name.textContent = input.files[0].name;
+        preview.style.display = 'flex';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function clearAnnFile() {
+    document.getElementById('annFileInputVis').value = '';
+    document.getElementById('annFileInput').value = '';
+    document.getElementById('annFilePreview').style.display = 'none';
+}
 
         function submitAnnConfirmed() {
             if (!pendingAnnouncement) return;
@@ -3680,43 +4286,91 @@ function exportFeedbackPDFConfirmed() {
     });
 }
 
-        function confirmAdminLogout() { closeAdminHam(); showModal('adminLogoutModal'); }
+        function confirmAdminLogout() { closeAdminHam(); localStorage.removeItem('adminSection'); showModal('adminLogoutModal'); }
 
         ['searchModal','sitinFormModal','sitinModal','editStudentModal','deleteModal','logoutModal','adminLogoutModal','editAnnModal','deleteAnnModal','reqModal','sitinFromResModal','confirmApproveReqModal','confirmRejectReqModal','confirmExportReportsCSVModal','confirmExportReportsExcelModal','confirmExportReportsPDFModal','confirmPrintReportsModal','confirmExportFeedbackCSVModal','confirmExportFeedbackExcelModal','confirmExportFeedbackPDFModal','confirmPrintFeedbackReportModal','confirmExportLogCSVModal','confirmExportLogExcelModal','confirmExportLogPDFModal','confirmPrintLogModal','deleteFeedbackModal','confirmDeleteReservationModal','wrongDateModal','editResDateModal','confirmBulkBlockModal','confirmBulkClearModal'].forEach(id => {            const el = document.getElementById(id);
             if (el) el.addEventListener('click', function(e) { if (e.target === this) closeModal(id); });
         });
 
-        window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function() {
+    const sidebarEl = document.getElementById('adminSidebar');
+    const wrapperEl = document.querySelector('.admin-wrapper');
+    const topbarEl  = document.getElementById('adminTopbar');
+    const footerEl  = document.querySelector('footer');
+
+    sidebarEl.style.transition = 'none';
+    wrapperEl.style.transition  = 'none';
+    topbarEl.style.transition   = 'none';
+    if (footerEl) footerEl.style.transition = 'none';
+
+    const savedSidebarState = localStorage.getItem('sidebarCollapsed');
+    if (savedSidebarState === 'true') {
+        sidebarEl.classList.add('collapsed');
+        wrapperEl.classList.add('sidebar-collapsed');
+        topbarEl.classList.add('sidebar-collapsed');
+        if (footerEl) footerEl.classList.add('sidebar-collapsed');
+        topbarEl.style.left = '0px';
+    } else {
+        topbarEl.style.left = '240px';
+    }
+    topbarEl.style.right    = '0px';
+    topbarEl.style.width    = 'auto';
+    topbarEl.style.overflow = 'visible';
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            sidebarEl.style.transition = '';
+            wrapperEl.style.transition  = '';
+            topbarEl.style.transition   = '';
+            if (footerEl) footerEl.style.transition = '';
             document.body.style.visibility = 'visible';
-            const goTo = sessionStorage.getItem('adminGoTo');
-            const savedSection = localStorage.getItem('adminSection');
-            if (savedSection && !goTo) {
-                const target = document.getElementById(savedSection);
-                if (target) {
-                    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-                    target.classList.add('active');
-                    document.querySelectorAll('.ham-dropdown a').forEach(a => {
-                        a.classList.remove('ham-active');
-                        if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(savedSection)) {
-                            a.classList.add('ham-active');
-                        }
-                    });
-                }
-            }
-            if (goTo) {
-                sessionStorage.removeItem('adminGoTo');
-                const target = document.getElementById(goTo);
-                if (target) {
-                    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-                    target.classList.add('active');
-                    document.querySelectorAll('.ham-dropdown a').forEach(a => { a.classList.remove('ham-active'); if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(goTo)) a.classList.add('ham-active'); });
-                }
-            }
-            initPagination();
-            buildLabRankings();
-            // Auto-expire approved reservations older than 1 hour
-            fetch('/admin/reservations/auto-expire', { method: 'POST' });
         });
+    });
+
+    const goTo = sessionStorage.getItem('adminGoTo');
+const savedSection = localStorage.getItem('adminSection');
+if (savedSection && !goTo) {
+    showSection(savedSection, null);
+}
+    if (goTo) {
+        sessionStorage.removeItem('adminGoTo');
+        const target = document.getElementById(goTo);
+        if (target) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            target.classList.add('active');
+            document.querySelectorAll('.ham-dropdown a').forEach(a => {
+                a.classList.remove('ham-active');
+                if (a.getAttribute('onclick') && a.getAttribute('onclick').includes(goTo)) {
+                    a.classList.add('ham-active');
+                }
+            });
+        }
+    }
+
+    initPagination();
+    buildLabRankings();
+    fetch('/admin/reservations/auto-expire', { method: 'POST' }); // ✅ ADD THIS BACK
+});
+
+// ✅ OUTSIDE — runs immediately on page load
+function refreshAdminNotifBadge() {
+    fetch('/admin/notifications/get')
+    .then(r => r.json())
+    .then(data => {
+        const badge = document.getElementById('adminNotifBadge');
+        if (!badge) return;
+        if (data.unread_count > 0) {
+            badge.style.display = 'flex';
+            badge.textContent = data.unread_count;
+        } else {
+            badge.style.display = 'none';
+        }
+    })
+    .catch(() => {});
+}
+
+refreshAdminNotifBadge();
+setInterval(refreshAdminNotifBadge, 30000);
 
         function printStudentsReport() {
             if (!confirm('Download Students Report as PDF?')) return;
@@ -6637,6 +7291,332 @@ function submitBulkClear() {
     .catch(() => showToast('✗ Connection error.', 'error'));
 }
 
+function toggleSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const wrapper = document.querySelector('.admin-wrapper');
+    const topbar  = document.getElementById('adminTopbar');
+    const footer  = document.querySelector('footer');
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    wrapper.classList.toggle('sidebar-collapsed');
+    topbar.classList.toggle('sidebar-collapsed');
+    if (footer) footer.classList.toggle('sidebar-collapsed');
+    if (footer) footer.style.marginLeft = isCollapsed ? '0px' : '240px';
+
+    /* ── FIXED: always keep overflow visible so right-side items never vanish ── */
+    topbar.style.left     = isCollapsed ? '0px' : '240px';
+    topbar.style.right    = '0px';
+    topbar.style.width    = 'auto';
+    topbar.style.overflow = 'visible';          /* ← never clear this */
+
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+}
+function toggleAdminNotif() {
+    const drop = document.getElementById('adminNotifDrop');
+    const isOpen = drop.classList.toggle('open');
+    if (isOpen) loadAdminNotifications();
+}
+
+function loadAdminNotifications() {
+    fetch('/admin/notifications/get')
+    .then(r => r.json())
+    .then(data => {
+        const list = document.getElementById('adminNotifList');
+        const badge = document.getElementById('adminNotifBadge');
+        
+        // Update badge
+        if (data.unread_count > 0) {
+            badge.style.display = 'flex';
+            badge.textContent = data.unread_count;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        if (!data.notifications || data.notifications.length === 0) {
+            list.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">No notifications yet.</div>';
+            return;
+        }
+
+        list.innerHTML = data.notifications.map(n => `
+            <div class="admin-notif-item ${n.unread ? 'unread' : ''}"
+                 onclick="adminNotifClick(${n.id}, '${n.status}')"
+                 style="cursor:pointer;">
+                <div style="width:8px;height:8px;border-radius:50%;background:${
+                    n.status === 'pending' ? '#F4B942' :
+                    n.status === 'cancelled' ? '#e74c3c' :
+                    n.status === 'approved' ? '#27ae60' : '#aaa'
+                };flex-shrink:0;margin-top:4px;"></div>
+                <div style="flex:1;">
+                    <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a;margin-bottom:2px;">
+                        ${n.icon} ${n.label}
+                    </div>
+                    <div style="font-size:0.8rem;color:#555;">
+                        ${n.name} (${n.idNumber}) — Lab ${n.lab} PC ${n.pc || '—'}
+                    </div>
+                    <div style="font-size:0.75rem;color:#aaa;margin-top:2px;">${n.created_at}</div>
+                </div>
+            </div>
+        `).join('');
+    })
+    .catch(() => {
+        document.getElementById('adminNotifList').innerHTML =
+            '<div style="text-align:center;padding:2rem;color:#aaa;">Failed to load.</div>';
+    });
+}
+
+function adminNotifClick(resId, status) {
+    // Mark as read
+    const fd = new FormData();
+    fd.append('res_id', resId);
+    fetch('/admin/notifications/mark-all-read', { method: 'POST', body: fd });
+
+    // Close dropdown
+    document.getElementById('adminNotifDrop').classList.remove('open');
+
+    // Go to reservation section first
+    showSection('section-reservation', null);
+
+    setTimeout(() => {
+        // Decide which tab based on status
+        const logStatuses = ['done', 'cancelled', 'expired', 'rejected'];
+        if (logStatuses.includes(status)) {
+            // Go to Log / History tab
+            const logTab = document.querySelector('[onclick*="res-panel-log"]');
+            if (logTab) switchResTab('res-panel-log', logTab);
+            setTimeout(() => initLogPagination(), 300);
+        } else {
+            // Go to Reservation Requests tab (pending, approved, sitting_in)
+            const reqTab = document.querySelector('[onclick*="res-panel-requests"]');
+            if (reqTab) switchResTab('res-panel-requests', reqTab);
+            setTimeout(() => initReqPagination(), 300);
+        }
+    }, 300);
+}
+
+function adminMarkAllRead() {
+    fetch('/admin/notifications/mark-all-read', { method: 'POST' })
+    .then(() => {
+        document.getElementById('adminNotifBadge').style.display = 'none';
+        document.querySelectorAll('.admin-notif-item.unread').forEach(el => {
+            el.classList.remove('unread');
+        });
+        // Redirect to reservation tab
+        document.getElementById('adminNotifDrop').classList.remove('open');
+        showSection('section-reservation', null);
+        setTimeout(() => {
+            const reqTab = document.querySelector('[onclick*="res-panel-requests"]');
+            if (reqTab) switchResTab('res-panel-requests', reqTab);
+        }, 200);
+    });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const btn = document.getElementById('adminNotifBtn');
+    const drop = document.getElementById('adminNotifDrop');
+    if (btn && drop && !btn.contains(e.target) && !drop.contains(e.target)) {
+        drop.classList.remove('open');
+    }
+});
+function toggleAdminAvatarDrop() {
+    const drop = document.getElementById('adminAvatarDrop');
+    drop.style.display = drop.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('adminAvatarWrap');
+    const drop = document.getElementById('adminAvatarDrop');
+    if (wrap && drop && !wrap.contains(e.target)) {
+        drop.style.display = 'none';
+    }
+});
+// ══════════════════════════════════════
+// SOFTWARE AVAILABILITY
+// ══════════════════════════════════════
+// ── NEW Software Availability JS ──
+const swData = { '524':[], '526':[], '528':[], '530':[], '542':[], '544':[] };
+
+function renderSwTable(lab) {
+    const tbody = document.getElementById('swBody-' + lab);
+    if (!tbody) return;
+    if (swData[lab].length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1rem;font-size:0.85rem;font-style:italic;">No software added yet. Use the fields below to add.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = swData[lab].map((item, i) => `
+        <tr class="${i % 2 === 0 ? 'sw-row-even' : 'sw-row-odd'}">
+            <td style="padding:0.55rem 0.75rem;color:#555;font-weight:700;">${i + 1}</td>
+            <td style="padding:0.55rem 0.75rem;">
+                <span contenteditable="true" 
+                    onblur="swData['${lab}'][${i}].name=this.innerText.trim(); saveSwData();"
+                    style="outline:none;display:inline-block;min-width:80px;">
+                    ${item.name}
+                </span>
+            </td>
+            <td style="padding:0.55rem 0.75rem;">
+                <span contenteditable="true"
+                    onblur="swData['${lab}'][${i}].version=this.innerText.trim(); saveSwData();"
+                    style="outline:none;display:inline-block;min-width:40px;color:#555;">
+                    ${item.version || '—'}
+                </span>
+            </td>
+            <td style="padding:0.55rem 0.75rem;text-align:center;" class="sw-no-print">
+                <button onclick="confirmRemoveSwRow('${lab}', ${i})" 
+                    style="background:#fdecea;color:#c0392b;border:1px solid #f5b7b1;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.78rem;font-weight:700;">✕</button>
+            </td>
+        </tr>`).join('');
+}
+
+function addSwRow(lab) {
+    const nameEl = document.getElementById('sw-name-' + lab);
+    const verEl  = document.getElementById('sw-ver-' + lab);
+    const name = nameEl.value.trim();
+    const ver  = verEl.value.trim();
+
+    // Clear previous errors
+    nameEl.style.borderColor = '#ddd';
+    verEl.style.borderColor  = '#ddd';
+
+    let hasError = false;
+
+    if (!name) {
+        nameEl.style.borderColor = '#c0392b';
+        nameEl.placeholder = '⚠️ Software name is required!';
+        nameEl.style.color = '#c0392b';
+        setTimeout(() => {
+            nameEl.style.borderColor = '#ddd';
+            nameEl.placeholder = 'Software name...';
+            nameEl.style.color = '';
+        }, 2500);
+        nameEl.focus();
+        hasError = true;
+    }
+
+    if (!ver) {
+        verEl.style.borderColor = '#c0392b';
+        verEl.placeholder = '⚠️ Version required!';
+        verEl.style.color = '#c0392b';
+        setTimeout(() => {
+            verEl.style.borderColor = '#ddd';
+            verEl.placeholder = 'Version...';
+            verEl.style.color = '';
+        }, 2500);
+        if (!hasError) verEl.focus();
+        hasError = true;
+    }
+
+    if (hasError) {
+        return;
+    }
+
+    swData[lab].push({ name, version: ver });
+    nameEl.value = '';
+    verEl.value  = '';
+    renderSwTable(lab);
+    saveSwData();
+    nameEl.focus();
+}
+
+function removeSwRow(lab, idx) {
+    swData[lab].splice(idx, 1);
+    renderSwTable(lab);
+    saveSwData();
+}
+
+function switchSwLab(panelId, btn) {
+    document.querySelectorAll('.sw-lab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.sw-lab-btn').forEach(b => b.classList.remove('sw-lab-active'));
+    document.getElementById(panelId).style.display = 'block';
+    btn.classList.add('sw-lab-active');
+}
+
+function saveSwData() {
+    localStorage.setItem('swAvailData_v2', JSON.stringify(swData));
+}
+
+function loadSwData() {
+    const saved = localStorage.getItem('swAvailData_v2');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            Object.keys(parsed).forEach(lab => {
+                if (swData[lab] !== undefined) swData[lab] = parsed[lab];
+            });
+        } catch(e) {}
+    }
+    ['524','526','528','530','542','544'].forEach(lab => renderSwTable(lab));
+
+    // Allow Enter key on sw inputs
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('sw-')) {
+            const labMatch = e.target.id.match(/sw-(?:name|ver)-(\d+)/);
+            if (labMatch) addSwRow(labMatch[1]);
+        }
+    });
+}
+
+function downloadSwPDF() {
+    showModal('confirmSwPDFModal');
+}
+
+function downloadSwPDFConfirmed() {
+    closeModal('confirmSwPDFModal');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const labs = ['524','526','528','530','542','544'];
+    let isFirst = true;
+
+    labs.forEach(lab => {
+        if (swData[lab].length === 0) return;
+        if (!isFirst) doc.addPage();
+        isFirst = false;
+
+        // Header
+        doc.setFillColor(15, 62, 125);
+        doc.rect(0, 0, 210, 28, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('LABORATORY ' + lab, 105, 11, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('College of Computer Studies — Software Availability', 105, 18, { align: 'center' });
+        doc.setFontSize(8);
+        doc.text('University of Cebu  |  Generated: ' + new Date().toLocaleString(), 105, 24, { align: 'center' });
+
+        // Table
+        const rows = swData[lab].map((item, i) => [i + 1, item.name, item.version || '—']);
+        doc.autoTable({
+            startY: 32,
+            head: [['#', 'Software Name', 'Version']],
+            body: rows,
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 5, textColor: [33,33,33], lineColor: [200,200,200], lineWidth: 0.2 },
+            headStyles: { fillColor: [15,62,125], textColor: [255,255,255], fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [245,248,255] },
+            columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 130 }, 2: { cellWidth: 45 } },
+            didDrawPage: () => {
+                doc.setFontSize(8); doc.setTextColor(170,170,170);
+                doc.text('CCS Sit-in Monitoring System  |  University of Cebu  © 2026', 105, 290, { align: 'center' });
+            }
+        });
+    });
+
+    if (isFirst) {
+        doc.setFontSize(12); doc.setTextColor(100,100,100);
+        doc.text('No software data added yet.', 105, 140, { align: 'center' });
+    }
+
+    doc.save('CCS_Software_Availability_' + new Date().toISOString().slice(0,10) + '.pdf');
+}
+
+document.addEventListener('DOMContentLoaded', loadSwData);
+function confirmRemoveSwRow(lab, idx) {
+    const name = swData[lab][idx]?.name || 'this software';
+    document.getElementById('swDeleteName').textContent = name;
+    document.getElementById('swDeleteConfirmBtn').onclick = function() {
+        closeModal('confirmSwDeleteModal');
+        removeSwRow(lab, idx);
+    };
+    showModal('confirmSwDeleteModal');
+}
+
     </script>
 <div class="modal-overlay" id="deleteFeedbackModal" style="display:none;">
     <div class="modal-box modal-sm">
@@ -7153,5 +8133,251 @@ function submitBulkClear() {
     </div>
 </div>
 
+<div class="modal-overlay" id="confirmSwDeleteModal" style="display:none; z-index:10001;">
+    <div class="modal-box modal-sm" style="max-width:360px;">
+        <div class="modal-header" style="background:#c0392b;">
+            <h3>Remove Software</h3>
+            <button class="modal-close" onclick="closeModal('confirmSwDeleteModal')">&#10005;</button>
+        </div>
+        <div class="modal-body" style="text-align:center;padding:1.75rem 1.5rem;">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem;">🗑️</div>
+            <p style="color:#333;font-size:0.95rem;margin-bottom:1.5rem;">
+                Are you sure you want to remove<br>
+                <strong id="swDeleteName" style="color:#c0392b;"></strong>?
+            </p>
+            <div style="display:flex;gap:0.8rem;justify-content:center;">
+                <button type="button" class="btn-modal-close" onclick="closeModal('confirmSwDeleteModal')">No, Cancel</button>
+                <button type="button" id="swDeleteConfirmBtn" style="background:#c0392b;color:white;border:none;padding:0.55rem 1.4rem;border-radius:6px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">Yes, Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SOFTWARE AVAILABILITY MODAL -->
+<div class="modal-overlay" id="softwareAvailModal" style="display:none; z-index:9999;">
+    <div style="
+        background: white;
+        border-radius: 16px;
+        width: 94%;
+        max-width: 860px;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        border: 1px solid #ddd;
+    ">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="color:white;font-size:1rem;font-weight:800;">🖥️ Software Availability per Lab</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button onclick="showModal('confirmSwPDFModal')" style="background:white;color:#0F3E7D;border:none;padding:0.4rem 1rem;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">
+                    ⬇️ Download PDF
+                </button>
+                <button onclick="closeModal('softwareAvailModal')" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0.85rem 1.25rem;border-bottom:1px solid #eee;flex-shrink:0;background:#fafafa;">
+            <button class="sw-lab-btn sw-lab-active" onclick="switchSwLab('sw-524',this)">Lab 524</button>
+            <button class="sw-lab-btn" onclick="switchSwLab('sw-526',this)">Lab 526</button>
+            <button class="sw-lab-btn" onclick="switchSwLab('sw-528',this)">Lab 528</button>
+            <button class="sw-lab-btn" onclick="switchSwLab('sw-530',this)">Lab 530</button>
+            <button class="sw-lab-btn" onclick="switchSwLab('sw-542',this)">Lab 542</button>
+            <button class="sw-lab-btn" onclick="switchSwLab('sw-544',this)">Lab 544</button>
+        </div>
+
+        <!-- Document Body -->
+        <div style="flex:1;overflow-y:auto;padding:2rem 2.5rem;background:white;" id="swDocBody">
+
+            <!-- Each Lab Panel -->
+            <div id="sw-524" class="sw-lab-panel">
+                <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #0F3E7D;padding-bottom:1rem;">
+                    <div style="font-size:1.2rem;font-weight:800;color:#0F3E7D;letter-spacing:0.05em;">LABORATORY 524</div>
+                    <div style="font-size:0.8rem;color:#888;margin-top:0.2rem;">College of Computer Studies — Software Availability</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.25rem;" id="swTable-524">
+                    <thead>
+                        <tr style="background:#0F3E7D;color:white;">
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="swBody-524"></tbody>
+                </table>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
+                    <input type="text" id="sw-name-524" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-524" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('524')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                </div>
+            </div>
+
+            <div id="sw-526" class="sw-lab-panel" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #0F3E7D;padding-bottom:1rem;">
+                    <div style="font-size:1.2rem;font-weight:800;color:#0F3E7D;letter-spacing:0.05em;">LABORATORY 526</div>
+                    <div style="font-size:0.8rem;color:#888;margin-top:0.2rem;">College of Computer Studies — Software Availability</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.25rem;" id="swTable-526">
+                    <thead>
+                        <tr style="background:#0F3E7D;color:white;">
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="swBody-526"></tbody>
+                </table>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
+                    <input type="text" id="sw-name-526" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-526" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('526')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                </div>
+            </div>
+
+            <div id="sw-528" class="sw-lab-panel" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #0F3E7D;padding-bottom:1rem;">
+                    <div style="font-size:1.2rem;font-weight:800;color:#0F3E7D;letter-spacing:0.05em;">LABORATORY 528</div>
+                    <div style="font-size:0.8rem;color:#888;margin-top:0.2rem;">College of Computer Studies — Software Availability</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.25rem;" id="swTable-528">
+                    <thead>
+                        <tr style="background:#0F3E7D;color:white;">
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="swBody-528"></tbody>
+                </table>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
+                    <input type="text" id="sw-name-528" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-528" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('528')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                </div>
+            </div>
+
+            <div id="sw-530" class="sw-lab-panel" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #0F3E7D;padding-bottom:1rem;">
+                    <div style="font-size:1.2rem;font-weight:800;color:#0F3E7D;letter-spacing:0.05em;">LABORATORY 530</div>
+                    <div style="font-size:0.8rem;color:#888;margin-top:0.2rem;">College of Computer Studies — Software Availability</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.25rem;" id="swTable-530">
+                    <thead>
+                        <tr style="background:#0F3E7D;color:white;">
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="swBody-530"></tbody>
+                </table>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
+                    <input type="text" id="sw-name-530" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-530" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('530')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                </div>
+            </div>
+
+            <div id="sw-542" class="sw-lab-panel" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #0F3E7D;padding-bottom:1rem;">
+                    <div style="font-size:1.2rem;font-weight:800;color:#0F3E7D;letter-spacing:0.05em;">LABORATORY 542</div>
+                    <div style="font-size:0.8rem;color:#888;margin-top:0.2rem;">College of Computer Studies — Software Availability</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.25rem;" id="swTable-542">
+                    <thead>
+                        <tr style="background:#0F3E7D;color:white;">
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="swBody-542"></tbody>
+                </table>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
+                    <input type="text" id="sw-name-542" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-542" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('542')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                </div>
+            </div>
+
+            <div id="sw-544" class="sw-lab-panel" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;border-bottom:2px solid #0F3E7D;padding-bottom:1rem;">
+                    <div style="font-size:1.2rem;font-weight:800;color:#0F3E7D;letter-spacing:0.05em;">LABORATORY 544</div>
+                    <div style="font-size:0.8rem;color:#888;margin-top:0.2rem;">College of Computer Studies — Software Availability</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:1.25rem;" id="swTable-544">
+                    <thead>
+                        <tr style="background:#0F3E7D;color:white;">
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
+                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="swBody-544"></tbody>
+                </table>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
+                    <input type="text" id="sw-name-544" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-544" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('544')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                </div>
+            </div>
+
+        </div><!-- end swDocBody -->
+    </div>
+</div>
+
+<style>
+.sw-lab-btn {
+    padding: 0.4rem 0.9rem;
+    border: 2px solid #185FA5;
+    border-radius: 20px;
+    background: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #0F3E7D;
+    font-family: Arial, sans-serif;
+    transition: all 0.18s;
+}
+.sw-lab-btn:hover { background: #E6F1FB; transform: translateY(-1px); }
+.sw-lab-btn.sw-lab-active { background: linear-gradient(135deg,#1a5db5,#0F3E7D); color: white; border-color: transparent; box-shadow: 0 3px 10px rgba(15,62,125,0.45); }
+
+.sw-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; min-height: 40px; }
+.sw-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #fff0f8, #ffe0f0);
+    border: 1.5px solid #ffb3d9;
+    border-radius: 20px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem; font-weight: 700; color: #c0005e;
+    font-family: Arial, sans-serif;
+}
+.sw-chip button { background:none; border:none; cursor:pointer; color:#ff2d87; font-size:0.85rem; line-height:1; padding:0; }
+.sw-chip button:hover { color:#c0005e; }
+
+.sw-add-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.sw-input {
+    flex: 1; padding: 0.5rem 0.8rem;
+    border: 1.5px solid #ffb3d9; border-radius: 10px;
+    font-size: 0.85rem; font-family: Arial, sans-serif; outline: none;
+}
+.sw-input:focus { border-color: #ff2d87; }
+.sw-add-btn {
+    background: linear-gradient(135deg,#ff2d87,#ff6eb4);
+    color: white; border: none; padding: 0.5rem 1rem;
+    border-radius: 10px; font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; font-family: Arial, sans-serif;
+    transition: all 0.18s;
+}
+.sw-add-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,45,135,0.4); }
+</style>
 </body>
 </html>

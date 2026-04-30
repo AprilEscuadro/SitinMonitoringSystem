@@ -263,6 +263,9 @@ def init_db():
         "ALTER TABLE sitin_sessions ADD COLUMN time_end TEXT DEFAULT NULL",
         "ALTER TABLE sitin_sessions ADD COLUMN time_start TEXT DEFAULT NULL",
         "ALTER TABLE sitin_sessions ADD COLUMN session_status TEXT DEFAULT 'sitting_in'",
+        "ALTER TABLE announcements ADD COLUMN attachment_path TEXT DEFAULT NULL",
+        "ALTER TABLE announcements ADD COLUMN attachment_type TEXT DEFAULT NULL",
+        "ALTER TABLE announcements ADD COLUMN attachment_name TEXT DEFAULT NULL",
     ]:
         try:
             conn.execute(migration)
@@ -471,15 +474,15 @@ def get_all_announcements():
     conn.close()
     return announcements
 
-def add_announcement(title, content, posted_by):
+def add_announcement(title, content, posted_by, attachment_path=None, attachment_type=None, attachment_name=None):
     from datetime import datetime, timezone, timedelta
     PH_TZ = timezone(timedelta(hours=8))
     now_ph = datetime.now(PH_TZ).strftime('%Y-%m-%d %H:%M:%S')
     conn = get_db()
     conn.execute("""
-        INSERT INTO announcements (title, content, posted_by, created_at)
-        VALUES (?, ?, ?, ?)
-    """, (title, content, posted_by, now_ph))
+        INSERT INTO announcements (title, content, posted_by, created_at, attachment_path, attachment_type, attachment_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (title, content, posted_by, now_ph, attachment_path, attachment_type, attachment_name))
     conn.commit()
     conn.close()
 
@@ -1070,3 +1073,24 @@ def get_leaderboard_scores():
     """).fetchall()
     conn.close()
     return rows
+
+def get_admin_notifications():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_notif_reads (
+            res_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    rows = conn.execute("""
+        SELECT r.id, r.idNumber, r.purpose, r.lab, r.pc_number,
+               r.time_in, r.date, r.status, r.created_at,
+               s.firstName, s.lastName
+        FROM reservations r
+        JOIN students s ON r.idNumber = s.idNumber
+        ORDER BY r.created_at DESC LIMIT 30
+    """).fetchall()
+    read_ids = {row['res_id'] for row in
+        conn.execute("SELECT res_id FROM admin_notif_reads").fetchall()}
+    conn.close()
+    return rows, read_ids
