@@ -26,6 +26,9 @@ from dbhelper import (
     get_read_announcement_ids, save_evaluation,
     get_leaderboard_scores,
     init_evaluations_table,
+    init_feedback_notifications_table,
+    add_feedback_notification,
+    get_feedback_notifications,
 )
 
 import sqlite3 as _sqlite3
@@ -131,6 +134,7 @@ def admin_get_leaderboard_scores():
             'lastName':       r['lastName'],
             'course':         r['course'],
             'yearLevel':      r['yearLevel'],
+            'photo_url':      r['photo_url'] or '',
             'raw_tidy_points': raw_tidy,
             'lb_tidy_pts':    lb_tidy_pts,
             'total_minutes':  total_mins,
@@ -379,8 +383,22 @@ def dashboard():
     read_ann_ids = get_read_announcement_ids(session['student_id'])
     unread_notif_count = sum(1 for n in notifications if n['res_id'] not in read_notif_ids)
     unread_ann_count = sum(1 for a in announcements if a['id'] not in read_ann_ids)
+    # Compute student's leaderboard rank
+    all_scores = get_leaderboard_scores()
+    ranked = []
+    for r in all_scores:
+        raw_tidy = r['raw_tidy_points'] or 0
+        total_mins = r['total_minutes'] or 0
+        tasks_done = r['tasks_completed'] or 0
+        total_sess = r['total_sessions'] or 1
+        final = ((raw_tidy/3)*0.5) + ((total_mins/60)*0.3) + ((tasks_done/total_sess)*0.2)
+        ranked.append((r['idNumber'], final))
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    rank_ids = [r[0] for r in ranked]
+    student_rank = rank_ids.index(session['student_id']) + 1 if session['student_id'] in rank_ids else 0
     return render_template('student_dashboard.html',
         student=student,
+        student_rank=student_rank,
         sessions=sessions,
         history_stats=history_stats,
         announcements=announcements,
@@ -443,9 +461,24 @@ def student_submit_feedback():
     conn.close()
     save_feedback(id_number, int(session_id), lab, message, rating, pc_number)
 
+    from dbhelper import add_feedback_notification
+    # Get the newly saved feedback id
+    import sqlite3 as _sq2
+    conn_fn = _sq2.connect('database.db', timeout=10)
+    fb_new = conn_fn.execute("SELECT id FROM feedback WHERE session_id=? AND idNumber=? ORDER BY id DESC LIMIT 1", (int(session_id), id_number)).fetchone()
+    conn_fn.close()
+    if fb_new:
+        add_feedback_notification(id_number, int(session_id), fb_new[0], lab, rating)
+
     return jsonify({'success': True, 'message': 'Feedback submitted successfully!'})
 
-
+@app.route('/student/get-feedback-notifications', methods=['GET'])
+def student_get_feedback_notifications():
+    if not session.get('student_id'):
+        return jsonify({'success': False}), 401
+    from dbhelper import get_feedback_notifications
+    notifs = get_feedback_notifications(session['student_id'])
+    return jsonify({'notifications': [dict(n) for n in notifs]})
 # ══════════════════════════════════════════
 # ROUTE — STUDENT UPDATE PROFILE (AJAX)
 # ══════════════════════════════════════════
@@ -1894,8 +1927,13 @@ def admin_get_notifications_list():
             read_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_feedback_reads (
+            feedback_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     
-    # ✅ Count ALL unread — not just last 30
     read_ids = {row['res_id'] for row in
         conn.execute("SELECT res_id FROM admin_notif_reads").fetchall()}
     
@@ -1913,7 +1951,6 @@ def admin_get_notifications_list():
         JOIN students s ON r.idNumber = s.idNumber
         ORDER BY r.created_at DESC LIMIT 30
     """).fetchall()
-    conn.close()
     
     result = []
     for r in rows:
@@ -1945,18 +1982,72 @@ def admin_get_notifications_list():
             'icon': icon,
             'label': label,
         })
-    
+
+    # ── Feedback notifications ──
+    feedback_rows = conn.execute("""
+        SELECT f.id, f.idNumber, f.lab, f.pc_number, f.rating,
+               f.message, f.is_flagged, f.created_at,
+               s.firstName, s.lastName
+        FROM feedback f
+        JOIN students s ON f.idNumber = s.idNumber
+        ORDER BY f.created_at DESC LIMIT 20
+    """).fetchall()
+
+    fb_read_ids = {r[0] for r in conn.execute("SELECT feedback_id FROM admin_feedback_reads").fetchall()}
+    conn.commit()
+    conn.close()
+
+    feedback_result = []
+    for f in feedback_rows:
+        feedback_result.append({
+            'id': f['id'],
+            'name': f"{f['firstName']} {f['lastName']}",
+            'idNumber': f['idNumber'],
+            'lab': f['lab'],
+            'pc': f['pc_number'],
+            'rating': f['rating'],
+            'message': (f['message'] or '')[:80],
+            'is_flagged': f['is_flagged'],
+            'created_at': f['created_at'],
+            'unread': f['id'] not in fb_read_ids,
+        })
+
+    fb_unread = sum(1 for f in feedback_result if f['unread'])
+
     return jsonify({
         'notifications': result,
-        'unread_count': total_unread  # ✅ ALL unread, not just last 30
+        'feedback': feedback_result,
+        'unread_count': total_unread + fb_unread,
+        'fb_unread_count': fb_unread,
     })
+
+@app.route('/admin/notifications/mark-feedback-read', methods=['POST'])
+def admin_mark_feedback_read():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    feedback_id = request.form.get('feedback_id', '').strip()
+    if not feedback_id:
+        return jsonify({'success': False})
+    conn = _sqlite3.connect('database.db', timeout=10)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_feedback_reads (
+            feedback_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute(
+        "INSERT OR IGNORE INTO admin_feedback_reads (feedback_id) VALUES (?)",
+        (feedback_id,)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
 
 @app.route('/admin/notifications/mark-all-read', methods=['POST'])
 def admin_mark_all_notif_read():
     if not session.get('admin'):
         return jsonify({'success': False}), 401
-    import sqlite3 as _sq
-    conn = _sq.connect('database.db', timeout=10)
+    conn = _sqlite3.connect('database.db', timeout=10)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS admin_notif_reads (
             res_id INTEGER PRIMARY KEY,
@@ -1964,9 +2055,40 @@ def admin_mark_all_notif_read():
         )
     """)
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_feedback_reads (
+            feedback_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # Mark all reservations as read
+    conn.execute("""
         INSERT OR IGNORE INTO admin_notif_reads (res_id)
         SELECT id FROM reservations
     """)
+    # Mark all feedback as read
+    conn.execute("""
+        INSERT OR IGNORE INTO admin_feedback_reads (feedback_id)
+        SELECT id FROM feedback
+    """)
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+@app.route('/admin/notifications/mark-single-read', methods=['POST'])
+def admin_mark_single_notif_read():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    res_id = request.form.get('res_id', '').strip()
+    if not res_id:
+        return jsonify({'success': False})
+    conn = _sqlite3.connect('database.db', timeout=10)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS admin_notif_reads (
+            res_id INTEGER PRIMARY KEY,
+            read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("INSERT OR IGNORE INTO admin_notif_reads (res_id) VALUES (?)", (res_id,))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -2014,6 +2136,14 @@ def admin_evaluate_sitin():
     # End the session
     end_sitin(int(session_id))
     save_evaluation(int(session_id), id_number, tidy_point, task_completed, duration_minutes)
+
+    from dbhelper import add_feedback_notification, get_all_feedback
+    # Get the feedback for this session if it exists
+    conn_fb = _sqlite3.connect('database.db', timeout=10)
+    fb_row = conn_fb.execute("SELECT id, lab, rating FROM feedback WHERE session_id=?", (int(session_id),)).fetchone()
+    conn_fb.close()
+    if fb_row:
+        add_feedback_notification(id_number, int(session_id), fb_row[0], fb_row[1] or '', fb_row[2] or 0)
 
     # PERMANENT FIX: Always update linked reservation to done after logout
     from datetime import datetime, timezone, timedelta
@@ -2152,6 +2282,7 @@ if __name__ == '__main__':
     init_reservations_table()
     init_reservation_settings()
     init_evaluations_table()
+    init_feedback_notifications_table()
     print("=================================")
     print("CCS Sit-in System Server Running!")
     print("Open: http://localhost:5000")

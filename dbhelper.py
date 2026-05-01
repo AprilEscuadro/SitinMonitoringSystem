@@ -1062,6 +1062,7 @@ def get_leaderboard_scores():
             s.lastName,
             s.course,
             s.yearLevel,
+            s.photo_url,
             COUNT(e.session_id) AS total_sessions,
             SUM(e.tidy_point) AS raw_tidy_points,
             SUM(e.duration_minutes) AS total_minutes,
@@ -1084,8 +1085,8 @@ def get_admin_notifications():
     """)
     rows = conn.execute("""
         SELECT r.id, r.idNumber, r.purpose, r.lab, r.pc_number,
-               r.time_in, r.date, r.status, r.created_at,
-               s.firstName, s.lastName
+                r.time_in, r.date, r.status, r.created_at,
+                s.firstName, s.lastName
         FROM reservations r
         JOIN students s ON r.idNumber = s.idNumber
         ORDER BY r.created_at DESC LIMIT 30
@@ -1094,3 +1095,45 @@ def get_admin_notifications():
         conn.execute("SELECT res_id FROM admin_notif_reads").fetchall()}
     conn.close()
     return rows, read_ids
+
+def init_feedback_notifications_table():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS feedback_notifications (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            idNumber   TEXT NOT NULL,
+            session_id INTEGER NOT NULL,
+            feedback_id INTEGER NOT NULL,
+            lab        TEXT,
+            rating     INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (idNumber) REFERENCES students(idNumber)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def add_feedback_notification(id_number, session_id, feedback_id, lab, rating):
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO feedback_notifications (idNumber, session_id, feedback_id, lab, rating)
+        VALUES (?, ?, ?, ?, ?)
+    """, (id_number, session_id, feedback_id, lab, rating))
+    conn.commit()
+    conn.close()
+
+def get_feedback_notifications(id_number):
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT fn.id, fn.session_id, fn.feedback_id, fn.lab, fn.rating, fn.created_at,
+                    f.message
+            FROM feedback_notifications fn
+            LEFT JOIN feedback f ON fn.feedback_id = f.id
+            WHERE fn.idNumber = ?
+            ORDER BY fn.created_at DESC LIMIT 20
+        """, (id_number,)).fetchall()
+    except:
+        rows = []
+    conn.close()
+    return rows

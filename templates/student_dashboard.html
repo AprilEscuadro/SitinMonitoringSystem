@@ -83,13 +83,48 @@ body {
     border-top: 1px solid rgba(255,255,255,0.1);
     padding: 8px 0; flex-shrink: 0;
 }
+
+.sidebar-mascot {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: hidden;
+    padding-top: 8px;
+}
+.sidebar-mascot img {
+    width: 75%;
+    max-width: 180px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    object-position: bottom;
+    transition: transform 0.3s ease;
+    animation: mascotBob 2.5s ease-in-out infinite;
+}
+.sidebar-mascot img:hover {
+    animation: mascotWiggle 0.5s ease-in-out infinite;
+    cursor: pointer;
+}
+@keyframes mascotBob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-6px); }
+}
+@keyframes mascotWiggle {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(-8deg); }
+    75%  { transform: rotate(8deg); }
+    100% { transform: rotate(0deg); }
+}
+
 .sidebar-item.sidebar-logout { color: #ff8a80; }
 .sidebar-item.sidebar-logout:hover { background: rgba(255,100,100,0.1); color: #ffab91; }
 
 .admin-wrapper { display: flex !important; align-items: flex-start; }
 .admin-main {
     padding: 0.5rem 2rem 1.5rem 2rem;
-    margin-top: 0;
+    padding-top: 80px;   /* was 0px */
     padding-top: 0px;
     background: transparent;
     min-height: calc(100vh - 70px);
@@ -386,7 +421,7 @@ footer { margin-left: 240px; transition: margin-left 0.3s ease; }
         .status-active { background: #e8f8ef; color: #27ae60; }
         .status-done   { background: #f0f0f0; color: #888; }
 
-        .admin-section-title { margin-top: 0; font-size: 1.15rem; font-weight: 800; color: #0F3E7D; margin: 0 0 1.25rem; }
+        .admin-section-title { margin-top: 0; font-size: 1.15rem; font-weight: 800; color: #0F3E7D; margin: 1.5rem 0 2.5rem; }
         .res-empty { text-align: center; padding: 3rem 1rem; color: #aaa; font-size: 0.92rem; }
 
         /* MODALS */
@@ -832,14 +867,7 @@ body { visibility: hidden; }
 .robot-wrap:hover .robot-tooltip {
     opacity: 1;
 }
-.robot-wrap {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 80px;
-    margin-bottom: 0;
-}
+
 .panel-card:last-child {
     overflow: visible !important;
     border-radius: 16px !important;
@@ -851,7 +879,7 @@ body { visibility: hidden; }
     justify-content: center;
     align-items: center;
     height: 50px;
-    top: -55px;
+    top: -70px;
     left: auto;
     right: 20px;
     background: transparent;
@@ -905,6 +933,17 @@ footer.sidebar-collapsed { margin-left: 0; }
 }
 .history-stat-card.longest-card {
     cursor: pointer;
+}
+#hoursModal ::-webkit-scrollbar {
+    width: 6px;
+}
+#hoursModal ::-webkit-scrollbar-track {
+    background: #e8f0fb;
+    border-radius: 10px;
+}
+#hoursModal ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #F4B942, #0F3E7D);
+    border-radius: 10px;
 }
 </style>
 </head>
@@ -984,10 +1023,15 @@ footer.sidebar-collapsed { margin-left: 0; }
          onclick="toggleStudentAvatarDrop()"
          onmouseover="this.style.background='#F5F6FA'"
          onmouseout="this.style.background='transparent'">
-        <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
-             alt="Profile"
-             style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #F4B942;flex-shrink:0;"
-             id="topbarAvatar">
+        <div style="position:relative;width:36px;height:36px;flex-shrink:0;">
+    <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
+         style="position:absolute;top:10%;left:10%;width:75%;height:75%;border-radius:50%;object-fit:cover;z-index:1;"
+         id="topbarAvatar">
+    {% if student_rank in [1,2,3] %}
+    <img src="{{ url_for('static', filename='images/RANK'~student_rank~'_AVATAR.png') }}"
+         style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:2;">
+    {% endif %}
+</div>
         <div>
             <div class="topbar-username">{{ student.firstName }}{% if student.middleName %} {{ student.middleName }}{% endif %} {{ student.lastName }}</div>
             <div class="topbar-role">Student</div>
@@ -1031,7 +1075,10 @@ footer.sidebar-collapsed { margin-left: 0; }
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
             <span>Reservation</span>
         </button>
-    </nav>
+</nav>
+    <div class="sidebar-mascot">
+        <img src="{{ url_for('static', filename='images/MASCOT_MESSAGE.png') }}" alt="CCS Mascot">
+    </div>
 </aside>
         <main class="admin-main">
 
@@ -1058,8 +1105,15 @@ footer.sidebar-collapsed { margin-left: 0; }
                         <div class="panel-tab-header">Student Information</div>
                         <div class="panel-body">
                             <div class="student-avatar-wrap">
-                                <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
-                                     alt="Profile" class="student-avatar-img" id="dashAvatar">
+                                <div style="position:relative;width:170px;height:170px;margin:0 auto;">
+    <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
+         alt="Profile" id="dashAvatar"
+         style="position:absolute;top:12%;left:12%;width:72%;height:72%;border-radius:50%;object-fit:cover;z-index:1;">
+    {% if student_rank in [1,2,3] %}
+    <img src="{{ url_for('static', filename='images/RANK'~student_rank~'_AVATAR.png') }}"
+         style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:2;">
+    {% endif %}
+</div>
                             </div>
                             <div class="student-info-list">
                                 <div class="info-row">
@@ -1124,7 +1178,9 @@ footer.sidebar-collapsed { margin-left: 0; }
                         <div class="robot-wrap" id="robotWrap">
                             <div class="robot-pulse-ring"></div>
                             <button class="robot-float-btn" onclick="toggleAiTipCard()">
-                                <span style="font-size:3rem; line-height:1;">🤖</span>
+                                <img src="{{ url_for('static', filename='images/UCCCS_MASCOT_HEAD.png') }}" 
+                                    alt="CCS Mascot"
+                                    style="width:55px;height:55px;object-fit:contain;">
                             </button>
                             <div class="robot-tooltip">✨ Get AI Sit-in Tips!</div>
                         </div>
@@ -1339,7 +1395,7 @@ footer.sidebar-collapsed { margin-left: 0; }
                 <!-- History Summary Cards -->
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
 
-    <div class="history-stat-card" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
+    <div class="history-stat-card" onclick="openHoursModal()" style="cursor:pointer;background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
         <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#e0ecff,#c7dcff);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">⏱️</div>
         <div>
             <div style="font-size:0.72rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Total Sit-in Hours</div>
@@ -1347,7 +1403,7 @@ footer.sidebar-collapsed { margin-left: 0; }
         </div>
     </div>
 
-    <div class="history-stat-card" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
+    <div class="history-stat-card" onclick="openSessionsModal()" style="cursor:pointer;background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
         <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#d4edda,#b7dfc4);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">📋</div>
         <div>
             <div style="font-size:0.72rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Sessions Used</div>
@@ -1355,7 +1411,7 @@ footer.sidebar-collapsed { margin-left: 0; }
         </div>
     </div>
 
-    <div class="history-stat-card" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
+    <div class="history-stat-card" onclick="openAvgDurationModal()" style="cursor:pointer;background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
         <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#fff3cd,#ffe89a);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">📊</div>
         <div>
             <div style="font-size:0.72rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Avg Session Duration</div>
@@ -1363,8 +1419,7 @@ footer.sidebar-collapsed { margin-left: 0; }
         </div>
     </div>
 
-    <div class="history-stat-card" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;">
-        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#fdecea,#f5b8b3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🏆</div>
+<div class="history-stat-card longest-card" onclick="goToLongestSession()" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.9);border-radius:16px;padding:1.25rem 1.5rem;box-shadow:4px 4px 0px rgba(192,132,252,0.25),0 6px 20px rgba(150,120,220,0.1);display:flex;align-items:center;gap:1rem;cursor:pointer;">        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#fdecea,#f5b8b3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🏆</div>
         <div>
             <div style="font-size:0.72rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Longest Session</div>
             <div style="font-size:1.4rem;font-weight:800;color:#c0392b;line-height:1;">{{ history_stats.longest }}</div>
@@ -2099,6 +2154,20 @@ if (slId) { const el = document.getElementById(slId); if (el) el.classList.add('
     })
     .catch(() => { saveBtn.textContent = origText; saveBtn.disabled = false; showToast('error'); });
 }
+
+function showToast(type, message) {
+    const successToast = document.getElementById('successToast');
+    const errorToast   = document.getElementById('errorToast');
+    if (type === 'success') {
+        successToast.style.display = 'block';
+        setTimeout(() => { successToast.style.display = 'none'; }, 3000);
+    } else {
+        document.getElementById('errorToastMsg').textContent = message || 'Something went wrong.';
+        errorToast.style.display = 'block';
+        setTimeout(() => { errorToast.style.display = 'none'; }, 3500);
+    }
+}
+
         // ══════════════════════════════════════
         // FEEDBACK MODAL
         // ══════════════════════════════════════
@@ -2816,15 +2885,27 @@ function openReservationNotif(el, resId) {
     function scrollAndHighlight() {
         const target = document.getElementById('my-res-row-' + resId);
         if (!target) return;
+
+        // Find which page the row is on WITHOUT moving it
         const idx = allResRows.indexOf(target);
         if (idx !== -1) {
-            resMyPage = Math.floor(idx / RES_PER_PAGE) + 1;
-            renderResTable();
+            const correctPage = Math.floor(idx / RES_PER_PAGE) + 1;
+            if (resMyPage !== correctPage) {
+                resMyPage = correctPage;
+                renderResTable();
+            }
         }
+
+        // Now scroll and highlight
         setTimeout(() => {
             target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            target.classList.add('notif-highlight-res');
-            setTimeout(() => target.classList.remove('notif-highlight-res'), 4000);
+            target.style.transition = 'background 0.3s, outline 0.3s';
+            target.style.background = 'rgba(15,62,125,0.15)';
+            target.style.outline = '2px solid #0F3E7D';
+            setTimeout(() => {
+                target.style.background = '';
+                target.style.outline = '';
+            }, 3000);
         }, 150);
     }
 
@@ -2835,6 +2916,7 @@ function openReservationNotif(el, resId) {
         setTimeout(() => scrollAndHighlight(), 400);
     }
 }
+
 function cancelReservation(resId) {
     document.getElementById('cancelResModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -2997,11 +3079,11 @@ if (futureEntries.length > 0) {
         // Paper/memo style — horizontal layout
         card.style.cssText = [
         'position:fixed',
-        'top:82px',
+        'top:65px',
         'right:12px',
         'left:auto',
-        'width:min(350px, calc(100vw - 24px))',
-        'max-height:min(520px, calc(100vh - 100px))',
+        'width:min(420px, calc(100vw - 24px))',
+        'max-height:calc(100vh - 50px)',
         'z-index:99999',
         'font-family:Arial,sans-serif',
         'opacity:0',
@@ -3061,7 +3143,7 @@ if (futureEntries.length > 0) {
     // Header
     '<div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-radius:26px 26px 0 0;box-shadow:0 4px 20px rgba(10,30,80,0.25);">' +
         '<div style="display:flex;align-items:center;gap:7px;">' +
-            '<span style="font-size:13px;">🤖</span>' +
+            '<span style="display:flex;align-items:center;flex-shrink:0;"><img src="/static/images/UCCCS_MASCOT_HEAD.png" style="width:22px;height:22px;object-fit:contain;"></span>' +
             '<span style="color:white;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">AI Sit-in Tip</span>' +
             '<span style="background:#F4B942;color:#412402;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;">Best Week: ' + tip.weekBadge + '</span>' +
         '</div>' +
@@ -3069,9 +3151,7 @@ if (futureEntries.length > 0) {
     '</div>' +
 
     // Scrollable body
-    '<div style="overflow-y:auto;flex:1;padding:14px 16px 4px 16px;scrollbar-width:thin;scrollbar-color:#F4B942 transparent;max-height:calc(100vh - 220px);min-height:0;">' +
-
-        // Week tip box — claymorphism
+'<div style="overflow-y:auto;flex:1;padding:14px 16px 4px 16px;scrollbar-width:thin;scrollbar-color:#F4B942 #e8f0fb;max-height:calc(100vh - 115px);min-height:0;">' +        // Week tip box — claymorphism
         '<div style="background:linear-gradient(135deg,rgba(230,241,251,0.85),rgba(214,232,250,0.8));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid rgba(255,255,255,0.9);border-radius:16px;padding:12px 14px;margin-bottom:10px;box-shadow:3px 3px 0px rgba(192,132,252,0.18),0 4px 12px rgba(15,62,125,0.08);">' +
             '<p style="font-size:12px;font-weight:800;color:#0F3E7D;margin:0 0 4px;line-height:1.3;">' + tip.weekTitle + '</p>' +
             '<p style="font-size:11px;color:#444;margin:0 0 8px;line-height:1.6;">' + tip.weekBody + '</p>' +
@@ -3203,6 +3283,62 @@ document.addEventListener('click', function(e) {
         drop.style.display = 'none';
     }
 });
+
+function goToLongestSession() {
+    // Make sure we're on history section
+    navTo('section-history', document.getElementById('sl-history'));
+
+    setTimeout(() => {
+        // Find the row with the longest duration
+        const rows = [...document.querySelectorAll('#section-history .dashboard-table tbody tr')]
+            .filter(r => !r.querySelector('td[colspan]'));
+
+        if (rows.length === 0) return;
+
+        // Parse duration from the Duration column (index 7)
+        function parseMins(text) {
+            if (!text || text === '—') return 0;
+            let total = 0;
+            const hrMatch  = text.match(/(\d+)\s*h/);
+            const minMatch = text.match(/(\d+)\s*m/);
+            if (hrMatch)  total += parseInt(hrMatch[1])  * 60;
+            if (minMatch) total += parseInt(minMatch[1]);
+            return total;
+        }
+
+        let maxMins = -1;
+        let targetRow = null;
+        rows.forEach(row => {
+            const durationCell = row.querySelectorAll('td')[7];
+            const mins = parseMins(durationCell?.innerText.trim());
+            if (mins > maxMins) {
+                maxMins = mins;
+                targetRow = row;
+            }
+        });
+
+        if (!targetRow) return;
+
+        // Paginate to correct page
+        const idx = allHistoryRows.indexOf(targetRow);
+        if (idx !== -1) {
+            historyPage = Math.floor(idx / 10) + 1;
+            renderHistoryTable();
+        }
+
+        // Scroll and highlight
+        setTimeout(() => {
+            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetRow.style.transition = 'background 0.3s, outline 0.3s';
+            targetRow.style.background = 'rgba(192,57,43,0.15)';
+            targetRow.style.outline = '2px solid #c0392b';
+            setTimeout(() => {
+                targetRow.style.background = '';
+                targetRow.style.outline = '';
+            }, 3000);
+        }, 200);
+    }, 350);
+}
     </script>
 <div class="modal-overlay" id="cancelResModal" style="display:none; z-index:9999;">
     <div class="modal-box" style="max-width:360px;">
@@ -3216,6 +3352,341 @@ document.addEventListener('click', function(e) {
             <div style="display:flex;gap:0.8rem;justify-content:center;">
                 <button type="button" class="btn-modal-close" onclick="closeModal('cancelResModal')">No, Keep It</button>
                 <button type="button" id="confirmCancelResBtn" style="background:#c0392b;color:white;border:none;padding:0.55rem 1.4rem;border-radius:6px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HOURS BREAKDOWN MODAL -->
+<div id="hoursModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+    <div style="
+        background:linear-gradient(145deg,rgba(255,255,255,0.95),rgba(235,242,255,0.92));
+        backdrop-filter:blur(40px);
+        -webkit-backdrop-filter:blur(40px);
+        border-radius:32px;
+        width:95%;
+        max-width:780px;
+        max-height:98vh;
+        overflow:hidden;
+        border:2px solid rgba(255,255,255,0.95);
+        box-shadow:0 30px 60px rgba(15,62,125,0.2),6px 6px 0px rgba(192,132,252,0.2);
+        font-family:Arial,sans-serif;
+    ">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-radius:30px 30px 0 0;position:sticky;top:0;z-index:1;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:1.4rem;">⏱️</span>
+                <span style="color:white;font-size:1rem;font-weight:800;letter-spacing:0.02em;">Sit-in Hours Breakdown</span>
+            </div>
+            <button onclick="closeHoursModal()" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        <!-- Body — landscape layout -->
+        <div style="padding:1.5rem 1.75rem;display:grid;grid-template-columns:200px 1fr;gap:1.5rem;align-items:start;height:calc(98vh - 70px);">
+
+            <!-- LEFT: total + formula -->
+            <div style="display:flex;flex-direction:column;gap:0.6rem;min-width:0;">
+                <!-- Big total -->
+                <div style="text-align:center;background:rgba(255,255,255,0.7);border-radius:20px;padding:1.25rem 1rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:3px 3px 0px rgba(192,132,252,0.15);">
+                    <div style="font-size:1.8rem;font-weight:800;color:#0F3E7D;line-height:1;" id="hoursModalTotal">—</div>
+                    <div style="font-size:0.72rem;color:#9CA3AF;margin-top:0.4rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Total Hours</div>
+                </div>
+
+                <!-- Stats summary -->
+                <div style="background:rgba(255,255,255,0.7);border-radius:20px;padding:1rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:3px 3px 0px rgba(192,132,252,0.15);">
+                    <div style="font-size:0.7rem;font-weight:800;color:#0F3E7D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">📊 Quick Stats</div>
+                    <div id="hoursQuickStats" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
+                </div>
+
+                <!-- Formula -->
+                <div style="background:rgba(15,62,125,0.06);border-radius:14px;padding:0.85rem 1rem;border:1px solid rgba(15,62,125,0.1);">
+                    <div style="font-size:0.7rem;font-weight:800;color:#0F3E7D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.35rem;">📐 Formula</div>
+                    <div style="font-size:0.78rem;color:#555;line-height:1.6;">
+                        Sum of <strong>login → logout</strong> per completed session.<br>
+                        Active sessions excluded.
+                    </div>
+                </div>
+
+                <button onclick="closeHoursModal()" style="
+                    background:linear-gradient(135deg,#1a5db5,#0F3E7D);
+                    color:white;border:none;padding:0.65rem 1rem;
+                    border-radius:14px;font-size:0.88rem;font-weight:700;
+                    cursor:pointer;font-family:Arial,sans-serif;
+                    box-shadow:0 4px 14px rgba(15,62,125,0.35);
+                    transition:all 0.18s ease;width:100%;
+                "
+                onmouseover="this.style.transform='translateY(-2px)'"
+                onmouseout="this.style.transform=''">Got it! 👍</button>
+            </div>
+
+            <!-- RIGHT: session bars -->
+            <div style="overflow-y:auto;max-height:100%;height:100%;padding-right:6px;scrollbar-width:thin;scrollbar-color:#F4B942 #e8f0fb;">
+                <div style="font-size:0.78rem;font-weight:800;color:#0F3E7D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">🕐 Top Sessions by Duration</div>
+                <div style="display:flex;flex-direction:column;gap:0.6rem;" id="hoursModalRows"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function openHoursModal() {
+    const rows = [...document.querySelectorAll('#section-history .dashboard-table tbody tr')]
+                 .filter(r => !r.querySelector('td[colspan]'));
+
+    let totalMinutes = 0;
+    const sessionData = [];
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const status = cells[9]?.querySelector('.status-badge')?.textContent.trim().toLowerCase();
+        if (status !== 'done') return;
+
+        const purpose  = cells[2]?.innerText.trim() || '—';
+        const lab      = cells[3]?.innerText.trim() || '—';
+        const login    = cells[5]?.innerText.trim() || '—';
+        const logout   = cells[6]?.innerText.trim() || '—';
+        const duration = cells[7]?.innerText.trim() || '—';
+        const date     = cells[8]?.innerText.trim() || '—';
+
+        let mins = 0;
+        const hrMatch  = duration.match(/(\d+)\s*h/);
+        const minMatch = duration.match(/(\d+)\s*m/);
+        if (hrMatch)  mins += parseInt(hrMatch[1]) * 60;
+        if (minMatch) mins += parseInt(minMatch[1]);
+        totalMinutes += mins;
+        sessionData.push({ purpose, lab, login, logout, duration, date, mins });
+    });
+
+    function fmt(m) {
+        if (m >= 60) { const h = Math.floor(m/60), r = m%60; return r>0?`${h}h ${r}m`:`${h}h`; }
+        return `${m}m`;
+    }
+
+    document.getElementById('hoursModalTotal').textContent = fmt(totalMinutes) || '0m';
+
+    // Quick stats
+    const avgMins = sessionData.length ? Math.round(totalMinutes / sessionData.length) : 0;
+    const maxSession = [...sessionData].sort((a,b) => b.mins - a.mins)[0];
+    document.getElementById('hoursQuickStats').innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:3px 0;border-bottom:1px dashed #e8e8e8;">
+            <span style="color:#888;">Sessions</span>
+            <span style="font-weight:700;color:#0F3E7D;">${sessionData.length}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:3px 0;border-bottom:1px dashed #e8e8e8;">
+            <span style="color:#888;">Avg/session</span>
+            <span style="font-weight:700;color:#10B981;">${fmt(avgMins)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:3px 0;">
+            <span style="color:#888;">Longest</span>
+            <span style="font-weight:700;color:#F59E0B;">${maxSession ? maxSession.duration : '—'}</span>
+        </div>
+    `;
+
+    // Top sessions
+    const top = [...sessionData].sort((a,b) => b.mins - a.mins).slice(0, 10);
+    const maxMins = top[0]?.mins || 1;
+    const colors = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
+
+    document.getElementById('hoursModalRows').innerHTML = top.length === 0
+        ? '<div style="text-align:center;color:#aaa;font-size:0.88rem;padding:1rem 0;">No completed sessions yet.</div>'
+        : top.map((s, i) => {
+            const pct = Math.round((s.mins / maxMins) * 100);
+            return `
+            <div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:0.65rem 0.9rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:2px 2px 0px rgba(192,132,252,0.12);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+                    <div>
+                        <span style="font-size:0.82rem;font-weight:700;color:#1a1a1a;">${s.purpose}</span>
+                        <span style="font-size:0.72rem;color:#9CA3AF;margin-left:6px;">Lab ${s.lab} · ${s.date}</span>
+                    </div>
+                    <span style="font-size:0.82rem;font-weight:800;color:${colors[i % colors.length]};white-space:nowrap;margin-left:8px;">${s.duration}</span>
+                </div>
+                <div style="background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${colors[i % colors.length]};border-radius:20px;"></div>
+                </div>
+                <div style="font-size:0.7rem;color:#aaa;margin-top:0.25rem;">${s.login} → ${s.logout}</div>
+            </div>`;
+        }).join('');
+
+    document.getElementById('hoursModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHoursModal() {
+    document.getElementById('hoursModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.getElementById('hoursModal').addEventListener('click', function(e) {
+    if (e.target === this) closeHoursModal();
+});
+function openSessionsModal() {
+    const rows = [...document.querySelectorAll('#section-history .dashboard-table tbody tr')]
+                 .filter(r => !r.querySelector('td[colspan]'));
+    const doneSessions = rows.filter(r => {
+        const badge = r.querySelectorAll('td')[9]?.querySelector('.status-badge');
+        return badge?.textContent.trim().toLowerCase() === 'done';
+    });
+
+    document.getElementById('suModalTotal').textContent = doneSessions.length;
+
+    const colors = ['#27ae60','#2ecc71','#10B981','#059669','#34d399','#6ee7b7'];
+    document.getElementById('suModalRows').innerHTML = doneSessions.length === 0
+        ? '<div style="text-align:center;color:#aaa;font-size:0.88rem;padding:1rem 0;">No completed sessions yet.</div>'
+        : doneSessions.map((row, i) => {
+            const cells = row.querySelectorAll('td');
+            const purpose  = cells[2]?.innerText.trim() || '—';
+            const lab      = cells[3]?.innerText.trim() || '—';
+            const date     = cells[8]?.innerText.trim() || '—';
+            const duration = cells[7]?.innerText.trim() || '—';
+            return `
+            <div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:0.65rem 0.9rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:2px 2px 0px rgba(192,132,252,0.12);display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:28px;height:28px;border-radius:50%;background:${colors[i % colors.length]};display:flex;align-items:center;justify-content:center;color:white;font-size:0.72rem;font-weight:800;flex-shrink:0;">${i+1}</div>
+                    <div>
+                        <div style="font-size:0.82rem;font-weight:700;color:#1a1a1a;">${purpose}</div>
+                        <div style="font-size:0.72rem;color:#9CA3AF;">Lab ${lab} · ${date}</div>
+                    </div>
+                </div>
+                <span style="font-size:0.82rem;font-weight:800;color:${colors[i % colors.length]};white-space:nowrap;">✓ Done</span>
+            </div>`;
+        }).join('');
+
+    document.getElementById('sessionsUsedModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// ← ADD THESE TWO RIGHT HERE, after the closing } above
+document.getElementById('sessionsUsedModal').addEventListener('click', function(e) {
+    if (e.target === this) { this.style.display = 'none'; document.body.style.overflow = ''; }
+});
+document.getElementById('avgDurationModal').addEventListener('click', function(e) {
+    if (e.target === this) { this.style.display = 'none'; document.body.style.overflow = ''; }
+});
+
+function openAvgDurationModal() {
+    const rows = [...document.querySelectorAll('#section-history .dashboard-table tbody tr')]
+                 .filter(r => !r.querySelector('td[colspan]'));
+
+    let totalMinutes = 0;
+    const sessionData = [];
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const status = cells[9]?.querySelector('.status-badge')?.textContent.trim().toLowerCase();
+        if (status !== 'done') return;
+        const purpose  = cells[2]?.innerText.trim() || '—';
+        const lab      = cells[3]?.innerText.trim() || '—';
+        const duration = cells[7]?.innerText.trim() || '—';
+        const date     = cells[8]?.innerText.trim() || '—';
+        let mins = 0;
+        const hrMatch  = duration.match(/(\d+)\s*h/);
+        const minMatch = duration.match(/(\d+)\s*m/);
+        if (hrMatch)  mins += parseInt(hrMatch[1]) * 60;
+        if (minMatch) mins += parseInt(minMatch[1]);
+        totalMinutes += mins;
+        sessionData.push({ purpose, lab, duration, date, mins });
+    });
+
+    function fmt(m) {
+        if (m >= 60) { const h = Math.floor(m/60), r = m%60; return r > 0 ? `${h}h ${r}m` : `${h}h`; }
+        return `${m}m`;
+    }
+
+    const count  = sessionData.length;
+    const avgMin = count ? Math.round(totalMinutes / count) : 0;
+    const maxMin = count ? Math.max(...sessionData.map(s => s.mins)) : 1;
+
+    document.getElementById('avgModalVal').textContent   = fmt(avgMin) || '0m';
+    document.getElementById('avgModalCount').textContent = count;
+
+    const colors = ['#856404','#b8860b','#F59E0B','#f39c12','#fbbf24','#fcd34d'];
+
+    document.getElementById('avgModalRows').innerHTML = count === 0
+        ? '<div style="text-align:center;color:#aaa;font-size:0.88rem;padding:1rem 0;">No completed sessions yet.</div>'
+        : sessionData.map((s, i) => {
+            const pct   = maxMin > 0 ? Math.round((s.mins / maxMin) * 100) : 0;
+            const color = colors[i % colors.length];
+            const isAbove = s.mins > avgMin;
+            return `
+            <div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:0.65rem 0.9rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:2px 2px 0px rgba(244,185,66,0.15);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+                    <div>
+                        <span style="font-size:0.82rem;font-weight:700;color:#1a1a1a;">${s.purpose}</span>
+                        <span style="font-size:0.72rem;color:#9CA3AF;margin-left:6px;">Lab ${s.lab} · ${s.date}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        ${isAbove ? '<span style="font-size:0.65rem;background:#fff3cd;color:#856404;padding:0.1rem 0.45rem;border-radius:10px;font-weight:700;">↑ above avg</span>' : '<span style="font-size:0.65rem;background:#f0f0f0;color:#888;padding:0.1rem 0.45rem;border-radius:10px;font-weight:700;">↓ below avg</span>'}
+                        <span style="font-size:0.82rem;font-weight:800;color:${color};white-space:nowrap;">${s.duration}</span>
+                    </div>
+                </div>
+                <div style="background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${color};border-radius:20px;"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+    document.getElementById('avgDurationModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+</script>
+<!-- SESSIONS USED MODAL -->
+<div id="sessionsUsedModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this){this.style.display='none';document.body.style.overflow='';}">
+    <div style="background:linear-gradient(145deg,rgba(255,255,255,0.95),rgba(235,242,255,0.92));backdrop-filter:blur(40px);border-radius:32px;width:95%;max-width:780px;max-height:98vh;overflow:hidden;border:2px solid rgba(255,255,255,0.95);box-shadow:0 30px 60px rgba(15,62,125,0.2),6px 6px 0px rgba(192,132,252,0.2);font-family:Arial,sans-serif;">
+        <div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-radius:30px 30px 0 0;">
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.4rem;">📋</span><span style="color:white;font-size:1rem;font-weight:800;">Sessions Used Breakdown</span></div>
+            <button onclick="document.getElementById('sessionsUsedModal').style.display='none';document.body.style.overflow='';" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <div style="padding:1.5rem 1.75rem;display:grid;grid-template-columns:200px 1fr;gap:1.5rem;align-items:start;height:calc(98vh - 70px);">
+            <!-- LEFT -->
+            <div style="display:flex;flex-direction:column;gap:0.6rem;min-width:0;">
+                <div style="text-align:center;background:rgba(255,255,255,0.7);border-radius:20px;padding:1.25rem 1rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:3px 3px 0px rgba(192,132,252,0.15);">
+                    <div style="font-size:2rem;font-weight:800;color:#27ae60;line-height:1;" id="suModalTotal">—</div>
+                    <div style="font-size:0.72rem;color:#9CA3AF;margin-top:0.4rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Total Sessions Used</div>
+                </div>
+                <div style="background:rgba(15,62,125,0.06);border-radius:14px;padding:0.85rem 1rem;border:1px solid rgba(15,62,125,0.1);">
+                    <div style="font-size:0.7rem;font-weight:800;color:#0F3E7D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.35rem;">📐 How It's Counted</div>
+                    <div style="font-size:0.78rem;color:#555;line-height:1.6;">Each <strong>completed (Done)</strong> sit-in session counts as <strong>1 session used</strong>.<br>Active sessions are excluded.</div>
+                </div>
+                <button onclick="document.getElementById('sessionsUsedModal').style.display='none';document.body.style.overflow='';" style="background:linear-gradient(135deg,#1a5db5,#0F3E7D);color:white;border:none;padding:0.65rem 1rem;border-radius:14px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 4px 14px rgba(15,62,125,0.35);width:100%;">Got it! 👍</button>
+            </div>
+            <!-- RIGHT -->
+            <div style="overflow-y:auto;max-height:100%;height:100%;padding-right:6px;scrollbar-width:thin;scrollbar-color:#F4B942 #e8f0fb;">
+                <div style="font-size:0.78rem;font-weight:800;color:#0F3E7D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">🕐 Session History</div>
+                <div id="suModalRows" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AVG DURATION MODAL -->
+<div id="avgDurationModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this){this.style.display='none';document.body.style.overflow='';}">
+    <div style="background:linear-gradient(145deg,rgba(255,255,255,0.95),rgba(255,251,235,0.92));backdrop-filter:blur(40px);border-radius:32px;width:95%;max-width:780px;max-height:98vh;overflow:hidden;border:2px solid rgba(255,255,255,0.95);box-shadow:0 30px 60px rgba(133,100,4,0.15),6px 6px 0px rgba(244,185,66,0.2);font-family:Arial,sans-serif;">
+        <div style="background:linear-gradient(135deg,#856404,#b8860b);padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-radius:30px 30px 0 0;">
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.4rem;">📊</span><span style="color:white;font-size:1rem;font-weight:800;">Avg Session Duration Breakdown</span></div>
+            <button onclick="document.getElementById('avgDurationModal').style.display='none';document.body.style.overflow='';" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <div style="padding:1.5rem 1.75rem;display:grid;grid-template-columns:200px 1fr;gap:1.5rem;align-items:start;height:calc(98vh - 70px);">
+            <!-- LEFT -->
+            <div style="display:flex;flex-direction:column;gap:0.6rem;min-width:0;">
+                <div style="text-align:center;background:rgba(255,255,255,0.7);border-radius:20px;padding:1.25rem 1rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:3px 3px 0px rgba(244,185,66,0.2);">
+                    <div style="font-size:1.8rem;font-weight:800;color:#856404;line-height:1;" id="avgModalVal">—</div>
+                    <div style="font-size:0.72rem;color:#9CA3AF;margin-top:0.4rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Average Duration</div>
+                </div>
+                <div style="text-align:center;background:rgba(255,255,255,0.7);border-radius:20px;padding:1rem;border:1.5px solid rgba(255,255,255,0.9);box-shadow:3px 3px 0px rgba(244,185,66,0.2);">
+                    <div style="font-size:1.8rem;font-weight:800;color:#0F3E7D;line-height:1;" id="avgModalCount">—</div>
+                    <div style="font-size:0.72rem;color:#9CA3AF;margin-top:0.3rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Sessions Counted</div>
+                </div>
+                <div style="background:rgba(133,100,4,0.06);border-radius:14px;padding:0.85rem 1rem;border:1px solid rgba(133,100,4,0.12);">
+                    <div style="font-size:0.7rem;font-weight:800;color:#856404;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.35rem;">📐 Formula</div>
+                    <div style="font-size:0.78rem;color:#555;line-height:1.6;"><strong>Avg</strong> = Total Minutes ÷ Sessions<br><span style="color:#aaa;font-size:0.72rem;">Only "Done" sessions included.</span></div>
+                </div>
+                <button onclick="document.getElementById('avgDurationModal').style.display='none';document.body.style.overflow='';" style="background:linear-gradient(135deg,#b8860b,#856404);color:white;border:none;padding:0.65rem 1rem;border-radius:14px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 4px 14px rgba(133,100,4,0.35);width:100%;">Got it! 👍</button>
+            </div>
+            <!-- RIGHT -->
+            <div style="overflow-y:auto;max-height:100%;height:100%;padding-right:6px;scrollbar-width:thin;scrollbar-color:#F4B942 #e8f0fb;">
+                <div style="font-size:0.78rem;font-weight:800;color:#856404;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">📅 Duration Per Session</div>
+                <div id="avgModalRows" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
             </div>
         </div>
     </div>

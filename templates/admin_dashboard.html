@@ -1181,15 +1181,29 @@ footer.sidebar-collapsed { margin-left: 0; }
     <!-- ✅ Remove style="display:none" so it shows immediately -->
     <span class="admin-notif-badge" id="adminNotifBadge" style="display:none;">0</span>
 </button>
-
     <div class="admin-notif-drop" id="adminNotifDrop">
     <div style="background:#0F3E7D;color:white;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:0.9rem;font-weight:700;">Reservation Notifications</span>
+        <span style="font-size:0.9rem;font-weight:700;">Notifications</span>
         <button onclick="adminMarkAllRead()" style="background:none;border:none;color:#F4B942;font-size:0.78rem;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">Mark all read</button>
+    </div>
+    <!-- Tab Row -->
+    <div style="display:flex;border-bottom:2px solid #f0f0f0;background:#fafafa;">
+        <button id="adminNotifTabRes" onclick="switchAdminNotifTab('res')" style="flex:1;padding:0.55rem 0.4rem;font-size:0.79rem;font-weight:700;background:none;border:none;cursor:pointer;color:#0F3E7D;border-bottom:2px solid #0F3E7D;font-family:Arial,sans-serif;">
+            📋 Reservations
+            <span id="adminResBadgeCount" style="background:#e74c3c;color:white;font-size:0.68rem;font-weight:800;padding:2px 6px;border-radius:10px;margin-left:4px;">0</span>
+        </button>
+        <button id="adminNotifTabFb" onclick="switchAdminNotifTab('fb')" style="flex:1;padding:0.55rem 0.4rem;font-size:0.79rem;font-weight:700;background:none;border:none;cursor:pointer;color:#888;border-bottom:2px solid transparent;font-family:Arial,sans-serif;">
+            ⭐ Feedback
+            <span id="adminFbBadgeCount" style="background:#ccc;color:white;font-size:0.68rem;font-weight:800;padding:2px 6px;border-radius:10px;margin-left:4px;">0</span>
+        </button>
     </div>
     <div id="adminNotifList" style="max-height:380px;overflow-y:auto;">
         <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">Loading...</div>
     </div>
+    <div id="adminFbNotifList" style="max-height:380px;overflow-y:auto;display:none;">
+        <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">Loading...</div>
+    </div>
+</div>
 </div>
     <div class="admin-notif-drop" id="adminNotifDrop">
         <div style="background:#0F3E7D;color:white;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
@@ -6377,6 +6391,39 @@ function buildLeaderboard() {
     const yearFilter   = document.getElementById('lbFilterYear')?.value || '';
     const limit        = parseInt(document.getElementById('lbLimit')?.value || '10');
 
+    // ── Build Top 3 Podium ──
+function buildTop3Podium(scored) {
+    const podium = document.getElementById('lbTop3Podium');
+    if (!podium) return;
+    if (scored.length === 0) { podium.style.display = 'none'; return; }
+    
+    podium.style.display = 'flex';
+    const top3 = scored.slice(0, 3);
+    const order = [1, 0, 2]; // display order: 2nd, 1st, 3rd
+    const ranks = ['RANK1', 'RANK2', 'RANK3'];
+    const heights = ['180px', '220px', '160px'];
+    const labels = ['🥇 1st Place', '🥈 2nd Place', '🥉 3rd Place'];
+
+    podium.innerHTML = order.map(i => {
+        if (!top3[i]) return '';
+        const s = top3[i];
+        const photo = s.photo_url || "{{ url_for('static', filename='images/ucmainccslogo.jpg') }}";
+        const frameImg = `/static/images/${ranks[i]}_AVATAR.png`;
+        return `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;margin-top:${i===0?'0':'30px'}">
+            <div style="position:relative;width:${heights[i]};height:${heights[i]};">
+                <img src="${photo}" 
+                    style="positstyle="position:absolute;top:12%;left:12%;width:68%;height:68%;border-radius:50%;object-fit:cover;z-index:1;"ion:absolute;top:18%;left:18%;width:55%;height:55%;border-radius:50%;object-fit:cover;z-index:1;"
+                    onerror="this.src='{{ url_for('static', filename='images/ucmainccslogo.jpg') }}'">
+                <img src="${frameImg}" 
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:2;">
+            </div>
+            <div style="font-size:0.85rem;font-weight:800;color:#0F3E7D;text-align:center;max-width:130px;line-height:1.3;">${s.lastName}, ${s.firstName.split(' ')[0]}</div>
+            <div style="font-size:0.78rem;color:#888;">${s.finalScore.toFixed(2)} pts</div>
+        </div>`;
+    }).join('');
+}
+
     // Show loading first
     const tbody = document.getElementById('leaderboardBody');
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:2rem;">Loading scores...</td></tr>';
@@ -6411,18 +6458,19 @@ function buildLeaderboard() {
 
         // Build scored list
         let scored = scoreData.scores.map(s => {
-            const student = studentMap[s.idNumber] || {};
-            return {
-                idNum:     s.idNumber,
-                firstName: s.firstName,
-                lastName:  s.lastName,
-                name:      (s.lastName + ', ' + s.firstName).toUpperCase(),
-                course:    s.course,
-                year:      student.year || s.yearLevel || '—',
-                remaining: student.remaining ?? 30,
-                finalScore: parseFloat(s.final_score?.toFixed(2) || '0')
-            };
-        });
+    const student = studentMap[s.idNumber] || {};
+    return {
+        idNum:     s.idNumber,
+        firstName: s.firstName,
+        lastName:  s.lastName,
+        name:      (s.lastName + ', ' + s.firstName).toUpperCase(),
+        course:    s.course,
+        year:      student.year || s.yearLevel || '—',
+        remaining: student.remaining ?? 30,
+        photo_url: s.photo_url || '',        // ← ADD THIS
+        finalScore: parseFloat(s.final_score?.toFixed(2) || '0')
+    };
+});
 
         // Apply filters
         if (courseFilter) scored = scored.filter(d => d.course === courseFilter);
@@ -6432,6 +6480,7 @@ function buildLeaderboard() {
         scored.sort((a, b) => b.finalScore - a.finalScore);
 
         const top      = scored.slice(0, limit);
+        buildTop3Podium(scored); // ← ADD THIS
         const maxScore = top[0]?.finalScore || 1;
 
         // Update summary cards
@@ -7320,86 +7369,258 @@ function loadAdminNotifications() {
     fetch('/admin/notifications/get')
     .then(r => r.json())
     .then(data => {
-        const list = document.getElementById('adminNotifList');
         const badge = document.getElementById('adminNotifBadge');
-        
-        // Update badge
-        if (data.unread_count > 0) {
-            badge.style.display = 'flex';
-            badge.textContent = data.unread_count;
-        } else {
-            badge.style.display = 'none';
-        }
+        const resBadge = document.getElementById('adminResBadgeCount');
+        const fbBadge  = document.getElementById('adminFbBadgeCount');
 
+        // Main bell badge
+        const totalUnread = (data.unread_count || 0);
+        if (totalUnread > 0) { badge.style.display = 'flex'; badge.textContent = totalUnread; }
+        else badge.style.display = 'none';
+
+        // Tab badges
+        const resUnread = (data.notifications || []).filter(n => n.unread).length;
+        const fbUnread  = (data.fb_unread_count || 0);
+        resBadge.textContent = resUnread;
+        resBadge.style.background = resUnread > 0 ? '#e74c3c' : '#ccc';
+        fbBadge.textContent  = fbUnread;
+        fbBadge.style.background  = fbUnread  > 0 ? '#e74c3c' : '#ccc';
+
+        // Reservation list
+        const list = document.getElementById('adminNotifList');
         if (!data.notifications || data.notifications.length === 0) {
-            list.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">No notifications yet.</div>';
-            return;
+            list.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">No reservation notifications.</div>';
+        } else {
+            list.innerHTML = data.notifications.map(n => `
+                <div class="admin-notif-item ${n.unread ? 'unread' : ''}"
+                     onclick="adminNotifClick(${n.id}, '${n.status}')"
+                     style="cursor:pointer;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:${
+                        n.status==='pending'?'#F4B942':n.status==='cancelled'?'#e74c3c':n.status==='approved'?'#27ae60':'#aaa'
+                    };flex-shrink:0;margin-top:4px;"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a;margin-bottom:2px;">${n.icon} ${n.label}</div>
+                        <div style="font-size:0.8rem;color:#555;">${n.name} (${n.idNumber}) — Lab ${n.lab} PC ${n.pc || '—'}</div>
+                        <div style="font-size:0.75rem;color:#aaa;margin-top:2px;">${n.created_at}</div>
+                    </div>
+                </div>`).join('');
         }
 
-        list.innerHTML = data.notifications.map(n => `
-            <div class="admin-notif-item ${n.unread ? 'unread' : ''}"
-                 onclick="adminNotifClick(${n.id}, '${n.status}')"
-                 style="cursor:pointer;">
-                <div style="width:8px;height:8px;border-radius:50%;background:${
-                    n.status === 'pending' ? '#F4B942' :
-                    n.status === 'cancelled' ? '#e74c3c' :
-                    n.status === 'approved' ? '#27ae60' : '#aaa'
-                };flex-shrink:0;margin-top:4px;"></div>
-                <div style="flex:1;">
-                    <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a;margin-bottom:2px;">
-                        ${n.icon} ${n.label}
+        // Feedback list
+        const fbList = document.getElementById('adminFbNotifList');
+        if (!data.feedback || data.feedback.length === 0) {
+            fbList.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.88rem;">No feedback yet.</div>';
+        } else {
+            fbList.innerHTML = data.feedback.map(f => {
+                const stars = '★'.repeat(f.rating||0) + '☆'.repeat(5-(f.rating||0));
+                const flagBadge = f.is_flagged ? '<span style="background:#fdecea;color:#c0392b;font-size:0.7rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;">⚠️ Flagged</span>' : '';
+                return `<div class="admin-notif-item ${f.unread ? 'unread' : ''}" data-feedback-id="${f.id}"
+                    onclick="adminFbNotifClick(${f.id})"
+                    style="cursor:pointer;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:${f.is_flagged?'#e74c3c':'#F4B942'};flex-shrink:0;margin-top:4px;"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:0.85rem;font-weight:700;color:#1a1a1a;margin-bottom:2px;">
+                            ⭐ ${f.name} — Lab ${f.lab||'—'} ${flagBadge}
+                        </div>
+                        <div style="font-size:0.8rem;color:#F4B942;">${stars}</div>
+                        <div style="font-size:0.78rem;color:#555;margin-top:2px;">${f.message}…</div>
+                        <div style="font-size:0.75rem;color:#aaa;margin-top:2px;">${f.created_at}</div>
                     </div>
-                    <div style="font-size:0.8rem;color:#555;">
-                        ${n.name} (${n.idNumber}) — Lab ${n.lab} PC ${n.pc || '—'}
-                    </div>
-                    <div style="font-size:0.75rem;color:#aaa;margin-top:2px;">${n.created_at}</div>
-                </div>
-            </div>
-        `).join('');
+                </div>`;
+            }).join('');
+        }
     })
-    .catch(() => {
-        document.getElementById('adminNotifList').innerHTML =
-            '<div style="text-align:center;padding:2rem;color:#aaa;">Failed to load.</div>';
-    });
+    .catch(() => {});
 }
+
+function switchAdminNotifTab(tab) {
+    const resList = document.getElementById('adminNotifList');
+    const fbList  = document.getElementById('adminFbNotifList');
+    const resTab  = document.getElementById('adminNotifTabRes');
+    const fbTab   = document.getElementById('adminNotifTabFb');
+    if (tab === 'res') {
+        resList.style.display = ''; fbList.style.display = 'none';
+        resTab.style.color = '#0F3E7D'; resTab.style.borderBottom = '2px solid #0F3E7D';
+        fbTab.style.color = '#888'; fbTab.style.borderBottom = '2px solid transparent';
+    } else {
+        fbList.style.display = ''; resList.style.display = 'none';
+        fbTab.style.color = '#0F3E7D'; fbTab.style.borderBottom = '2px solid #0F3E7D';
+        resTab.style.color = '#888'; resTab.style.borderBottom = '2px solid transparent';
+    }
+}
+
+function adminFbNotifClick(feedbackId) {
+    // Mark as read in backend
+    const fd = new FormData();
+    fd.append('feedback_id', feedbackId);
+    fetch('/admin/notifications/mark-feedback-read', { method: 'POST', body: fd });
+
+    // Mark visually as read
+    document.querySelectorAll('.admin-notif-item').forEach(el => {
+        if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(feedbackId)) {
+            el.classList.remove('unread');
+        }
+    });
+
+    // Update feedback tab badge
+    const fbUnread = document.querySelectorAll('#adminFbNotifList .admin-notif-item.unread').length;
+    const fbBadge = document.getElementById('adminFbBadgeCount');
+    if (fbBadge) {
+        fbBadge.textContent = fbUnread;
+        fbBadge.style.background = fbUnread > 0 ? '#e74c3c' : '#ccc';
+    }
+
+    // Update main bell badge
+    const totalUnread = document.querySelectorAll('#adminNotifList .admin-notif-item.unread, #adminFbNotifList .admin-notif-item.unread').length;
+    const mainBadge = document.getElementById('adminNotifBadge');
+    if (mainBadge) {
+        mainBadge.style.display = totalUnread > 0 ? 'flex' : 'none';
+        mainBadge.textContent = totalUnread;
+    }
+
+    // Close dropdown
+    document.getElementById('adminNotifDrop').classList.remove('open');
+
+    // Navigate to feedback section
+    showSection('section-feedback', null);
+
+    // Highlight the feedback row
+    setTimeout(() => {
+        // Find the row in feedback table by feedback id
+        const rows = document.querySelectorAll('#feedbackTableBody tr');
+        let targetRow = null;
+        rows.forEach(row => {
+            // Match by feedback id stored in data-id attribute
+            if (row.getAttribute('data-id') == feedbackId) {
+                targetRow = row;
+            }
+        });
+
+        if (!targetRow) return;
+
+        // Paginate to correct page
+        const idx = allFeedbackRows.indexOf(targetRow);
+        if (idx !== -1) {
+            feedbackPage = Math.floor(idx / PER_PAGE) + 1;
+            renderTable('feedback');
+        }
+
+        // Scroll and highlight
+        setTimeout(() => {
+            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetRow.style.transition = 'background 0.3s';
+            targetRow.style.background = 'rgba(244,185,66,0.35)';
+            targetRow.style.outline = '2px solid #F4B942';
+            setTimeout(() => {
+                targetRow.style.background = '';
+                targetRow.style.outline = '';
+            }, 3000);
+        }, 200);
+    }, 350);
+}
+
 
 function adminNotifClick(resId, status) {
     // Mark as read
     const fd = new FormData();
     fd.append('res_id', resId);
-    fetch('/admin/notifications/mark-all-read', { method: 'POST', body: fd });
+    fetch('/admin/notifications/mark-single-read', { method: 'POST', body: fd });
 
-    // Close dropdown
+    // Close dropdown and update badge
     document.getElementById('adminNotifDrop').classList.remove('open');
+    refreshAdminNotifBadge();
 
-    // Go to reservation section first
+    // Mark this item as visually read
+    const clickedItem = document.querySelector(`.admin-notif-item[onclick*="'${resId}'"]`);
+    if (clickedItem) clickedItem.classList.remove('unread');
+
     showSection('section-reservation', null);
 
+    const logStatuses = ['done', 'cancelled', 'expired', 'rejected'];
+
     setTimeout(() => {
-        // Decide which tab based on status
-        const logStatuses = ['done', 'cancelled', 'expired', 'rejected'];
         if (logStatuses.includes(status)) {
-            // Go to Log / History tab
             const logTab = document.querySelector('[onclick*="res-panel-log"]');
             if (logTab) switchResTab('res-panel-log', logTab);
-            setTimeout(() => initLogPagination(), 300);
+            setTimeout(() => {
+                initLogPagination();
+                highlightLogRow(resId);
+            }, 400);
         } else {
-            // Go to Reservation Requests tab (pending, approved, sitting_in)
             const reqTab = document.querySelector('[onclick*="res-panel-requests"]');
             if (reqTab) switchResTab('res-panel-requests', reqTab);
-            setTimeout(() => initReqPagination(), 300);
+            setTimeout(() => {
+                initReqPagination();
+                highlightReqRow(resId);
+            }, 400);
         }
     }, 300);
+}
+
+function highlightReqRow(resId) {
+    const row = document.getElementById('req-row-' + resId);
+    if (!row) return;
+    // Find page
+    const idx = allReqRows.indexOf(row);
+    if (idx !== -1) {
+        reqPage = Math.floor(idx / PER_PAGE) + 1;
+        renderReqTable();
+    }
+    setTimeout(() => {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.transition = 'background 0.3s';
+        row.style.background = 'rgba(244,185,66,0.35)';
+        row.style.outline = '2px solid #F4B942';
+        setTimeout(() => {
+            row.style.background = '';
+            row.style.outline = '';
+        }, 3000);
+    }, 200);
+}
+
+function highlightLogRow(resId) {
+    // Find row in log table by matching reservation id in first cell
+    const rows = document.querySelectorAll('#logTableBody tr');
+    let targetRow = null;
+    rows.forEach(r => {
+        if (r.querySelector('td')?.innerText.trim() == resId) targetRow = r;
+    });
+    if (!targetRow) return;
+    const idx = allLogRows.indexOf(targetRow);
+    if (idx !== -1) {
+        logPage = Math.floor(idx / PER_PAGE) + 1;
+        renderLogTable();
+    }
+    setTimeout(() => {
+        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetRow.style.transition = 'background 0.3s';
+        targetRow.style.background = 'rgba(15,62,125,0.18)';
+        targetRow.style.outline = '2px solid #0F3E7D';
+        setTimeout(() => {
+            targetRow.style.background = '';
+            targetRow.style.outline = '';
+        }, 3000);
+    }, 200);
 }
 
 function adminMarkAllRead() {
     fetch('/admin/notifications/mark-all-read', { method: 'POST' })
     .then(() => {
+        // Hide main badge
         document.getElementById('adminNotifBadge').style.display = 'none';
+
+        // Clear all unread visually
         document.querySelectorAll('.admin-notif-item.unread').forEach(el => {
             el.classList.remove('unread');
         });
-        // Redirect to reservation tab
+
+        // Reset tab badges
+        const resBadge = document.getElementById('adminResBadgeCount');
+        const fbBadge  = document.getElementById('adminFbBadgeCount');
+        if (resBadge) { resBadge.textContent = '0'; resBadge.style.background = '#ccc'; }
+        if (fbBadge)  { fbBadge.textContent  = '0'; fbBadge.style.background  = '#ccc'; }
+
+        // Close dropdown and go to reservation tab
         document.getElementById('adminNotifDrop').classList.remove('open');
         showSection('section-reservation', null);
         setTimeout(() => {
