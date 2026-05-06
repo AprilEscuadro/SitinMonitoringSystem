@@ -29,9 +29,16 @@ from dbhelper import (
     init_feedback_notifications_table,
     add_feedback_notification,
     get_feedback_notifications,
+      init_reset_tokens_table,
+    save_reset_token,
+    get_reset_token,
+    mark_token_used,
 )
-
 import sqlite3 as _sqlite3
+from flask_mail import Mail, Message
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CCS_COURSES = {'BSIT', 'BSCS', 'BSCoE', 'CISCO'}
 
@@ -48,7 +55,14 @@ def reset_all_sessions():
     conn.close()
 
 app = Flask(__name__)
-app.secret_key = 'ccs_sitin_secret_key'
+app.config['MAIL_SERVER']   = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT']     = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS']  = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.secret_key = os.getenv('SECRET_KEY')
+
+mail = Mail(app)
 
 
 SUCCESS_PAGE = """
@@ -675,7 +689,7 @@ def admin_add_sitin_ajax():
     # Check pending reservation
     existing_res = conn_check.execute("""
         SELECT id, lab, pc_number, time_in, status FROM reservations
-        WHERE idNumber = ? AND date = ? AND status = 'pending'
+        WHERE idNumber = ? AND date = ? AND status IN ('pending', 'approved')
     """, (id_number, today)).fetchone()
 
     # Check active sit-in session
@@ -687,9 +701,10 @@ def admin_add_sitin_ajax():
     conn_check.close()
 
     if existing_res:
+        status_label = 'PENDING' if existing_res[4] == 'pending' else 'APPROVED'
         return jsonify({
             'success': False,
-            'message': f"⚠️ This student has a PENDING reservation today for Lab {existing_res[1]}, PC {existing_res[2]} at {existing_res[3]}. Please go to the Reservation tab to process it, or reject it first before doing a walk-in."
+            'message': f"⚠️ This student has a {status_label} reservation today for Lab {existing_res[1]}, PC {existing_res[2]} at {existing_res[3]}. Please go to the Reservation tab to process it, or reject it first before doing a walk-in."
         })
 
     if active_session:
@@ -2273,7 +2288,75 @@ def admin_logout():
 # ══════════════════════════════════════════
 @app.route('/forgot-password', methods=['POST'])
 def forgot_password():
-    return jsonify({'success': True, 'message': '✓ If your ID and email match, a reset link has been sent.'})
+    import secrets
+    forgot_id    = request.form.get('forgotId', '').strip()
+    forgot_email = request.form.get('forgotEmail', '').strip()
+
+    student = get_student_by_id(forgot_id)
+    if not student or student['email'].lower() != forgot_email.lower():
+        return jsonify({'success': True, 'message': '✓ If your ID and email match, a reset link has been sent.'})
+
+    token = secrets.token_urlsafe(32)
+    save_reset_token(forgot_id, token)
+
+    reset_link = f"http://localhost:5000/reset-password/{token}"
+    print(f"\n[DEBUG] Reset link: {reset_link}\n")  # makita sa terminal
+
+    try:
+        msg = Message(
+            subject="CCS Sit-in System — Password Reset",
+            sender=os.getenv('MAIL_USERNAME'),
+            recipients=[forgot_email],
+            body=f"""Hello {student['firstName']},
+
+Click the link below to reset your password (expires in 1 hour):
+
+{reset_link}
+
+If you did not request this, ignore this email.
+"""
+        )
+        mail.send(msg)
+        return jsonify({'success': True, 'message': '✓ Reset link sent! Check your email.'})
+    except Exception as e:
+        print(f"\n[MAIL ERROR DETAILS] {type(e).__name__}: {e}\n")
+        # Fallback: show link in terminal, still let user proceed
+        return jsonify({
+            'success': True, 
+            'message': '✓ If your ID and email match, a reset link has been sent.'
+        })
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    row = get_reset_token(token)
+    if not row:
+        return render_template_string(ERROR_PAGE,
+            message="This reset link is invalid or has expired.",
+            back_page="/login")
+
+    if request.method == 'GET':
+        return render_template('reset_password.html', token=token, error=None)
+
+    new_password = request.form.get('newPassword', '').strip()
+    confirm      = request.form.get('confirmPassword', '').strip()
+
+    if len(new_password) < 6:
+        return render_template('reset_password.html', token=token,
+                               error="Password must be at least 6 characters.")
+    if new_password != confirm:
+        return render_template('reset_password.html', token=token,
+                               error="Passwords do not match.")
+
+    import hashlib
+    hashed = hashlib.sha256(new_password.encode()).hexdigest()
+    conn = _sqlite3.connect('database.db', timeout=10)
+    conn.execute("UPDATE students SET password=? WHERE idNumber=?",
+                 (hashed, row['idNumber']))
+    conn.commit()
+    conn.close()
+    mark_token_used(token)
+
+    return redirect('/login?reset=1')
 # ══════════════════════════════════════════
 # RUN
 # ══════════════════════════════════════════
@@ -2283,6 +2366,7 @@ if __name__ == '__main__':
     init_reservation_settings()
     init_evaluations_table()
     init_feedback_notifications_table()
+    init_reset_tokens_table()
     print("=================================")
     print("CCS Sit-in System Server Running!")
     print("Open: http://localhost:5000")

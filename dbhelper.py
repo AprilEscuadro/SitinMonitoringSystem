@@ -1137,3 +1137,44 @@ def get_feedback_notifications(id_number):
         rows = []
     conn.close()
     return rows
+
+def init_reset_tokens_table():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS reset_tokens (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            idNumber   TEXT NOT NULL,
+            token      TEXT NOT NULL UNIQUE,
+            expires_at DATETIME NOT NULL,
+            used       INTEGER DEFAULT 0
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def save_reset_token(id_number, token):
+    from datetime import datetime, timedelta
+    expires = (datetime.now() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+    conn = get_db()
+    conn.execute("DELETE FROM reset_tokens WHERE idNumber=?", (id_number,))
+    conn.execute(
+        "INSERT INTO reset_tokens (idNumber, token, expires_at) VALUES (?,?,?)",
+        (id_number, token, expires)
+    )
+    conn.commit()
+    conn.close()
+
+def get_reset_token(token):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM reset_tokens WHERE token=? AND used=0 AND expires_at > datetime('now')",
+        (token,)
+    ).fetchone()
+    conn.close()
+    return row
+
+def mark_token_used(token):
+    conn = get_db()
+    conn.execute("UPDATE reset_tokens SET used=1 WHERE token=?", (token,))
+    conn.commit()
+    conn.close()

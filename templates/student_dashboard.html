@@ -1361,28 +1361,158 @@ footer.sidebar-collapsed { margin-left: 0; }
 
             <!-- Save Changes Confirm Modal -->
             <div id="confirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9000; align-items:center; justify-content:center;">
-                <div style="background:white; border-radius:12px; padding:2rem 2.25rem; max-width:380px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.25); text-align:center;">
-                    <div style="font-size:2rem; margin-bottom:0.75rem;">&#128190;</div>
-                    <h3 style="color:#0F3E7D; margin:0 0 0.6rem; font-size:1.1rem;">Save Changes?</h3>
-                    <p style="color:#555; font-size:0.9rem; margin:0 0 1.5rem; line-height:1.5;">Are you sure you want to save these changes to your profile?</p>
-                    <div style="display:flex; gap:0.75rem; justify-content:center;">
-                        <button onclick="doSave()" style="background:#0F3E7D; color:white; border:none; padding:0.65rem 1.6rem; border-radius:7px; font-size:0.9rem; font-weight:700; cursor:pointer; font-family:Arial,sans-serif;">Yes, Save</button>
-                        <button onclick="closeConfirmModal()" style="background:#e0e0e0; color:#333; border:none; padding:0.65rem 1.6rem; border-radius:7px; font-size:0.9rem; font-weight:700; cursor:pointer; font-family:Arial,sans-serif;">Cancel</button>
-                    </div>
-                </div>
+                <div style="
+    background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(235,242,255,0.88));
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 36px;
+    width: 90%;
+    max-width: 420px;
+    border: 2px solid rgba(255,255,255,0.95);
+    box-shadow: 0 30px 60px rgba(15,62,125,0.18), 6px 6px 0px rgba(192,132,252,0.15);
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #0a1e50, #0F3E7D); padding: 1.1rem 1.4rem; display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: white; font-size: 1rem; font-weight: 800; letter-spacing: 0.02em;">Save Changes</span>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 1.5rem 2rem; text-align: center;">
+        <div style="
+            width: 90px; height: 90px;
+            background: linear-gradient(145deg, #e8f0fb, #c7dcff);
+            border-radius: 30px;
+            margin: 0 auto 1.25rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.6rem;
+            box-shadow: 0 10px 30px rgba(15,62,125,0.25), 0 2px 0 rgba(255,255,255,0.9) inset;
+            border: 2px solid rgba(255,255,255,0.9);
+            transform: rotate(-4deg);
+            animation: clayWobble 3s ease-in-out infinite;
+        ">💾</div>
+
+        <p style="color: #2c2c2e; font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem;">Save Changes?</p>
+        <p style="color: #6c6c70; font-size: 0.88rem; margin: 0 0 2rem; line-height: 1.6;">
+            Are you sure you want to save<br>these changes to your profile?
+        </p>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+            <!-- Cancel -->
+            <button onclick="closeConfirmModal()" style="
+                background: linear-gradient(145deg, #f2f2f7, #e5e5ea);
+                color: #3a3a3c;
+                border: 2px solid rgba(255,255,255,0.9);
+                padding: 0.75rem 1.5rem;
+                border-radius: 18px;
+                font-size: 0.95rem; font-weight: 700;
+                cursor: pointer; font-family: Arial, sans-serif;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.08), 0 2px 0 rgba(255,255,255,0.95) inset;
+                transition: all 0.18s ease; flex: 1; max-width: 150px;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.transform=''">
+                Cancel
+            </button>
+
+            <!-- Yes, Save -->
+            <button onclick="doSave()" style="
+                background: linear-gradient(145deg, #1a5db5, #0F3E7D);
+                color: white;
+                border: 2px solid rgba(255,255,255,0.25);
+                padding: 0.75rem 1.5rem;
+                border-radius: 18px;
+                font-size: 0.95rem; font-weight: 700;
+                cursor: pointer; font-family: Arial, sans-serif;
+                box-shadow: 0 8px 24px rgba(15,62,125,0.4), 0 2px 0 rgba(255,255,255,0.2) inset;
+                transition: all 0.18s ease; flex: 1; max-width: 150px;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.transform=''">
+                Yes, Save
+            </button>
+        </div>
+    </div>
+</div>
             </div>
 
             <!-- Unsaved Changes Warning Modal -->
             <div id="unsavedModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9001; align-items:center; justify-content:center;">
-                <div style="background:white; border-radius:12px; padding:2rem 2.25rem; max-width:400px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.25); text-align:center;">
-                    <div style="font-size:2rem; margin-bottom:0.75rem;">⚠️</div>
-                    <h3 style="color:#e67e22; margin:0 0 0.6rem; font-size:1.1rem;">Unsaved Changes</h3>
-                    <p style="color:#555; font-size:0.9rem; margin:0 0 1.5rem; line-height:1.5;">You have unsaved changes on your profile.<br>Are you sure you want to leave? Your changes will be lost.</p>
-                    <div style="display:flex; gap:0.75rem; justify-content:center;">
-                        <button id="unsavedLeaveBtn" style="background:#c0392b; color:white; border:none; padding:0.65rem 1.6rem; border-radius:7px; font-size:0.9rem; font-weight:700; cursor:pointer; font-family:Arial,sans-serif;">Leave without saving</button>
-                        <button onclick="closeUnsavedModal()" style="background:#e0e0e0; color:#333; border:none; padding:0.65rem 1.6rem; border-radius:7px; font-size:0.9rem; font-weight:700; cursor:pointer; font-family:Arial,sans-serif;">Stay &amp; Save</button>
-                    </div>
-                </div>
+                <div style="
+    background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,248,230,0.88));
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 36px;
+    width: 90%;
+    max-width: 420px;
+    border: 2px solid rgba(255,255,255,0.95);
+    box-shadow: 0 30px 60px rgba(230,126,34,0.15), 6px 6px 0px rgba(244,185,66,0.15);
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #e67e22, #f39c12); padding: 1.1rem 1.4rem; display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: white; font-size: 1rem; font-weight: 800; letter-spacing: 0.02em;">Unsaved Changes</span>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 1.5rem 2rem; text-align: center;">
+        <div style="
+            width: 90px; height: 90px;
+            background: linear-gradient(145deg, #fff8e1, #ffe082);
+            border-radius: 30px;
+            margin: 0 auto 1.25rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.6rem;
+            box-shadow: 0 10px 30px rgba(255,193,7,0.35), 0 2px 0 rgba(255,255,255,0.9) inset;
+            border: 2px solid rgba(255,255,255,0.9);
+            transform: rotate(-4deg);
+            animation: clayWobble 3s ease-in-out infinite;
+        ">⚠️</div>
+
+        <p style="color: #2c2c2e; font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem;">You have unsaved changes</p>
+        <p style="color: #6c6c70; font-size: 0.88rem; margin: 0 0 2rem; line-height: 1.6;">
+            Are you sure you want to leave?<br>Your changes will be lost.
+        </p>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+            <!-- Stay & Save -->
+            <button onclick="closeUnsavedModal()" style="
+                background: linear-gradient(145deg, #f2f2f7, #e5e5ea);
+                color: #3a3a3c;
+                border: 2px solid rgba(255,255,255,0.9);
+                padding: 0.75rem 1.5rem;
+                border-radius: 18px;
+                font-size: 0.95rem; font-weight: 700;
+                cursor: pointer; font-family: Arial, sans-serif;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.08), 0 2px 0 rgba(255,255,255,0.95) inset;
+                transition: all 0.18s ease; flex: 1; max-width: 150px;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.transform=''">
+                Stay &amp; Save
+            </button>
+
+            <!-- Leave -->
+            <button id="unsavedLeaveBtn" style="
+                background: linear-gradient(145deg, #e67e22, #d35400);
+                color: white;
+                border: 2px solid rgba(255,255,255,0.25);
+                padding: 0.75rem 1.5rem;
+                border-radius: 18px;
+                font-size: 0.95rem; font-weight: 700;
+                cursor: pointer; font-family: Arial, sans-serif;
+                box-shadow: 0 8px 24px rgba(211,84,0,0.4), 0 2px 0 rgba(255,255,255,0.2) inset;
+                transition: all 0.18s ease; flex: 1; max-width: 150px;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.transform=''">
+                Leave
+            </button>
+        </div>
+    </div>
+</div>
             </div>
 
             <!-- SUCCESS / ERROR TOASTS -->

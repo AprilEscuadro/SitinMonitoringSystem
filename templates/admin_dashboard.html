@@ -1312,10 +1312,14 @@ footer.sidebar-collapsed { margin-left: 0; }
 <div id="section-home" class="page-section active">
 
     <!-- Welcome Banner -->
-    <div style="margin-bottom:1rem;">
+{% if request.args.get('loggedin') %}
+<div style="margin-bottom:1rem;">
     <h2 style="color:#111;margin:0 0 0.2rem;font-size:1.05rem;font-weight:800;">Welcome back, {{ session['admin_name'] }}! 👋</h2>
     <p style="color:#9CA3AF;margin:0;font-size:0.82rem;">Here's what's happening with the sit-in sessions today.</p>
 </div>
+{% else %}
+<h2 class="admin-section-title">Dashboard</h2>
+{% endif %}
 
     <!-- Stat Cards -->
     {% set active_count = sessions|selectattr('status','equalto','active')|list|length %}
@@ -1405,9 +1409,45 @@ onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(15,62,
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;align-items:center;">
                     <input type="text" id="newAnnTitle" placeholder="Title..." style="flex:1;padding:0.5rem 0.7rem;border:1.5px solid #e8e8e8;border-radius:8px;font-size:0.88rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0F3E7D'" onblur="this.style.borderColor='#e8e8e8'">
                     <!-- Attach button -->
-                    <label title="Image/GIF max 5MB · PDF/PPTX/DOCX max 10MB" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1.5px solid #e8e8e8;border-radius:8px;cursor:pointer;flex-shrink:0;transition:all 0.18s;" onmouseover="this.style.borderColor='#0F3E7D'" onmouseout="this.style.borderColor='#e8e8e8'">
+                    <label id="annAttachLabel" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1.5px solid #e8e8e8;border-radius:8px;cursor:pointer;flex-shrink:0;transition:all 0.18s;position:relative;" onmouseover="this.style.borderColor='#0F3E7D'" onmouseout="this.style.borderColor='#e8e8e8'">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="#888"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
                         <input type="file" id="annFileInputVis" accept="image/*,.gif,.pdf,.pptx,.ppt,.docx,.doc" style="display:none;" onchange="onAnnFileSelect(this)">
+                        <div id="attachTooltip" style="
+                            display:none;
+                            position:absolute;
+                            bottom:calc(100% + 10px);
+                            right:0;
+                            background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460,#e94560);
+                            color:black;
+                            border-radius:16px;
+                            padding:0.75rem 1rem;
+                            width:220px;
+                            font-family:Arial,sans-serif;
+                            font-size:0.72rem;
+                            box-shadow:0 8px 24px rgba(15,62,125,0.35), 0 2px 0 rgba(255,255,255,0.1) inset, 4px 4px 0px rgba(192,132,252,0.25);
+                            border:1.5px solid rgba(255,255,255,0.2);
+                            z-index:9999;
+                            pointer-events:none;
+                            animation:tooltipPop 0.2s ease;
+                        ">
+                            <div style="font-weight:800;font-size:0.62rem;margin-bottom:0.4rem;color:#F4B942;">📎 Attach a file!</div>
+                            <div style="display:flex;flex-direction:column;gap:3px;">
+                                <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:4px;">
+                                    <span style="font-size:0.68rem;color:rgba(255,255,255,0.85);white-space:nowrap;">🖼️ Images &amp; GIFs</span>
+                                    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);">max</span>
+                                    <span style="font-size:0.65rem;font-weight:800;color:#F4B942;text-align:right;">5MB</span>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:4px;">
+                                    <span style="font-size:0.68rem;color:rgba(255,255,255,0.85);white-space:nowrap;">📄 PDF / PPTX / DOCX</span>
+                                    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);">max</span>
+                                    <span style="font-size:0.65rem;font-weight:800;color:#F4B942;text-align:right;">10MB</span>
+                                </div>
+                            </div>
+                            <!-- Arrow -->
+                            <div style="position:absolute;bottom:-7px;right:14px;width:14px;height:7px;overflow:hidden;">
+                                <div style="width:10px;height:10px;background:#0F3E7D;transform:rotate(45deg);margin:-5px auto 0;border:1.5px solid rgba(255,255,255,0.2);"></div>
+                            </div>
+                        </div>
                     </label>
                     <form action="/admin/announcement/add" method="post" id="annForm" enctype="multipart/form-data" style="display:inline;">
                         <input type="hidden" name="title" id="annTitleHidden">
@@ -7659,33 +7699,68 @@ function renderSwTable(lab) {
     const tbody = document.getElementById('swBody-' + lab);
     if (!tbody) return;
     if (swData[lab].length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1rem;font-size:0.85rem;font-style:italic;">No software added yet. Use the fields below to add.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1rem;font-size:0.8rem;font-style:italic;">No software added yet. Use the fields below to add.</td></tr>';
         return;
     }
     tbody.innerHTML = swData[lab].map((item, i) => `
-        <tr class="${i % 2 === 0 ? 'sw-row-even' : 'sw-row-odd'}">
-            <td style="padding:0.55rem 0.75rem;color:#555;font-weight:700;">${i + 1}</td>
-            <td style="padding:0.55rem 0.75rem;">
-                <span contenteditable="true" 
-                    onblur="swData['${lab}'][${i}].name=this.innerText.trim(); saveSwData();"
-                    style="outline:none;display:inline-block;min-width:80px;">
-                    ${item.name}
-                </span>
+        <tr class="${i % 2 === 0 ? 'sw-row-even' : 'sw-row-odd'}" id="sw-row-${lab}-${i}">
+            <td style="padding:0.5rem 0.75rem;color:#555;font-weight:700;font-size:0.8rem;">${i + 1}</td>
+            <td style="padding:0.5rem 0.75rem;font-size:0.8rem;" id="sw-name-cell-${lab}-${i}">
+                <span>${item.name}</span>
             </td>
-            <td style="padding:0.55rem 0.75rem;">
-                <span contenteditable="true"
-                    onblur="swData['${lab}'][${i}].version=this.innerText.trim(); saveSwData();"
-                    style="outline:none;display:inline-block;min-width:40px;color:#555;">
-                    ${item.version || '—'}
-                </span>
+            <td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#555;" id="sw-ver-cell-${lab}-${i}">
+                <span>${item.version || '—'}</span>
             </td>
-            <td style="padding:0.55rem 0.75rem;text-align:center;" class="sw-no-print">
-                <button onclick="confirmRemoveSwRow('${lab}', ${i})" 
-                    style="background:#fdecea;color:#c0392b;border:1px solid #f5b7b1;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.78rem;font-weight:700;">✕</button>
+            <td style="padding:0.45rem 0.6rem;text-align:center;white-space:nowrap;" class="sw-no-print">
+                <button id="sw-edit-btn-${lab}-${i}" onclick="startSwEdit('${lab}', ${i})"
+                    style="background:#e8f0fb;color:#0F3E7D;border:1px solid #b3c9f5;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.75rem;font-weight:700;margin-right:3px;">✏️ Edit</button>
+                <button onclick="confirmRemoveSwRow('${lab}', ${i})"
+                    style="background:#fdecea;color:#c0392b;border:1px solid #f5b7b1;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.75rem;font-weight:700;">🗑️ Delete</button>
             </td>
         </tr>`).join('');
 }
+function startSwEdit(lab, idx) {
+    const item     = swData[lab][idx];
+    const nameCell = document.getElementById(`sw-name-cell-${lab}-${idx}`);
+    const verCell  = document.getElementById(`sw-ver-cell-${lab}-${idx}`);
+    const editBtn  = document.getElementById(`sw-edit-btn-${lab}-${idx}`);
 
+    nameCell.innerHTML = `<input type="text" id="sw-edit-name-${lab}-${idx}"
+        value="${item.name.replace(/"/g,'&quot;')}"
+        style="width:100%;padding:0.3rem 0.55rem;border:1.5px solid #0F3E7D;border-radius:6px;font-size:0.8rem;font-family:Arial,sans-serif;outline:none;box-sizing:border-box;">`;
+    verCell.innerHTML  = `<input type="text" id="sw-edit-ver-${lab}-${idx}"
+        value="${(item.version||'').replace(/"/g,'&quot;')}"
+        style="width:100%;padding:0.3rem 0.55rem;border:1.5px solid #0F3E7D;border-radius:6px;font-size:0.8rem;font-family:Arial,sans-serif;outline:none;box-sizing:border-box;">`;
+
+    editBtn.innerHTML  = '💾 Save';
+    editBtn.style.background   = '#eafaf1';
+    editBtn.style.color        = '#1e7e34';
+    editBtn.style.borderColor  = '#a9dfbf';
+    editBtn.setAttribute('onclick', `saveSwEdit('${lab}', ${idx})`);
+
+    document.getElementById(`sw-edit-name-${lab}-${idx}`).focus();
+}
+
+function saveSwEdit(lab, idx) {
+    const nameInput = document.getElementById(`sw-edit-name-${lab}-${idx}`);
+    const verInput  = document.getElementById(`sw-edit-ver-${lab}-${idx}`);
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
+    const ver  = verInput ? verInput.value.trim() : '';
+
+    if (!name) {
+        nameInput.style.borderColor = '#c0392b';
+        nameInput.placeholder = 'Name is required!';
+        nameInput.focus();
+        return;
+    }
+
+    swData[lab][idx].name    = name;
+    swData[lab][idx].version = ver;
+    saveSwData();
+    renderSwTable(lab);
+    showToast('✓ Software updated.', 'success');
+}
 function addSwRow(lab) {
     const nameEl = document.getElementById('sw-name-' + lab);
     const verEl  = document.getElementById('sw-ver-' + lab);
@@ -7836,6 +7911,13 @@ function confirmRemoveSwRow(lab, idx) {
         removeSwRow(lab, idx);
     };
     showModal('confirmSwDeleteModal');
+}
+const _attachLabel = document.getElementById('annAttachLabel');
+const _attachTip   = document.getElementById('attachTooltip');
+if (_attachLabel && _attachTip) {
+    _attachLabel.addEventListener('mouseenter', () => { _attachTip.style.display = 'block'; });
+    _attachLabel.addEventListener('mouseleave', () => { _attachTip.style.display = 'none'; });
+    _attachLabel.addEventListener('click', () => { _attachTip.style.display = 'none'; });
 }
 
     </script>
@@ -8065,7 +8147,7 @@ function confirmRemoveSwRow(lab, idx) {
             <input type="hidden" id="evalSessionId">
 
             <!-- Student Info -->
-            <div style="background:#E6F1FB;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.25rem;">
+            <div style="background:#E6F1FB;border-radius:10px;padding:0.5rem 0.75rem;margin-bottom:1.25rem;">
                 <div style="font-size:0.82rem;color:#185FA5;font-weight:700;margin-bottom:0.2rem;">STUDENT</div>
                 <div style="font-size:1rem;font-weight:800;color:#0F3E7D;" id="evalStudentName">—</div>
                 <div style="font-size:0.82rem;color:#185FA5;margin-top:0.3rem;">
@@ -8381,7 +8463,7 @@ function confirmRemoveSwRow(lab, idx) {
         border-radius: 16px;
         width: 94%;
         max-width: 860px;
-        max-height: 88vh;
+        max-height: 110vh;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -8424,8 +8506,7 @@ function confirmRemoveSwRow(lab, idx) {
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
-                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
-                        </tr>
+<th style="padding:0.6rem 0.75rem;text-align:center;width:130px;background:#c0392b;font-size:0.8rem;" class="sw-no-print">Actions</th>                        </tr>
                     </thead>
                     <tbody id="swBody-524"></tbody>
                 </table>
@@ -8447,8 +8528,7 @@ function confirmRemoveSwRow(lab, idx) {
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
-                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
-                        </tr>
+<th style="padding:0.6rem 0.75rem;text-align:center;width:130px;background:#c0392b;font-size:0.8rem;" class="sw-no-print">Actions</th>                        </tr>
                     </thead>
                     <tbody id="swBody-526"></tbody>
                 </table>
@@ -8470,8 +8550,7 @@ function confirmRemoveSwRow(lab, idx) {
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
-                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
-                        </tr>
+<th style="padding:0.6rem 0.75rem;text-align:center;width:130px;background:#c0392b;font-size:0.8rem;" class="sw-no-print">Actions</th>                        </tr>
                     </thead>
                     <tbody id="swBody-528"></tbody>
                 </table>
@@ -8493,8 +8572,7 @@ function confirmRemoveSwRow(lab, idx) {
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
-                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
-                        </tr>
+<th style="padding:0.6rem 0.75rem;text-align:center;width:130px;background:#c0392b;font-size:0.8rem;" class="sw-no-print">Actions</th>                        </tr>
                     </thead>
                     <tbody id="swBody-530"></tbody>
                 </table>
@@ -8516,8 +8594,7 @@ function confirmRemoveSwRow(lab, idx) {
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
-                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
-                        </tr>
+<th style="padding:0.6rem 0.75rem;text-align:center;width:130px;background:#c0392b;font-size:0.8rem;" class="sw-no-print">Actions</th>                        </tr>
                     </thead>
                     <tbody id="swBody-542"></tbody>
                 </table>
@@ -8539,8 +8616,7 @@ function confirmRemoveSwRow(lab, idx) {
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
                             <th style="padding:0.6rem 0.75rem;text-align:left;width:140px;">Version</th>
-                            <th style="padding:0.6rem 0.75rem;text-align:center;width:60px;background:#c0392b;" class="sw-no-print">✕</th>
-                        </tr>
+<th style="padding:0.6rem 0.75rem;text-align:center;width:130px;background:#c0392b;font-size:0.8rem;" class="sw-no-print">Actions</th>                        </tr>
                     </thead>
                     <tbody id="swBody-544"></tbody>
                 </table>
@@ -8599,6 +8675,10 @@ function confirmRemoveSwRow(lab, idx) {
     transition: all 0.18s;
 }
 .sw-add-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,45,135,0.4); }
+@keyframes tooltipPop {
+    from { opacity:0; transform:translateY(6px) scale(0.95); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
 </style>
 </body>
 </html>

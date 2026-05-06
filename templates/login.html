@@ -157,7 +157,7 @@
                 <form action="/forgot-password" method="post" id="forgotForm">
                     <div class="form-field">
                         <label>ID Number</label>
-                        <input type="text" name="forgotId" required placeholder="e.g. 2024-00001">
+                        <input type="text" name="forgotId" required placeholder="e.g. 23759481">
                     </div>
                     <div class="form-field">
                         <label>Email Address</label>
@@ -207,43 +207,84 @@
         function closeForgotModal() {
             document.getElementById('forgotModal').style.display = 'none';
             document.body.style.overflow = '';
+
+            // Reset modal state for next use
+            const btn = document.querySelector('#forgotModal .btn-primary');
+            btn.disabled = false;
+            btn.textContent = 'Send Reset Link';
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.style.background = '';
+            btn.onclick = function() { handleForgotPassword(); };
+
+            document.querySelector('[name="forgotId"]').closest('.form-field').style.display = '';
+            document.querySelector('[name="forgotEmail"]').closest('.form-field').style.display = '';
+            document.getElementById('forgotMessage').style.display = 'none';
         }
 
         document.getElementById('forgotModal').addEventListener('click', function(e) {
             if (e.target === this) closeForgotModal();
         });
 
-        function handleForgotPassword() {
-            const id    = document.querySelector('[name="forgotId"]').value.trim();
-            const email = document.querySelector('[name="forgotEmail"]').value.trim();
-            const msg   = document.getElementById('forgotMessage');
+    function handleForgotPassword() {
+    const id    = document.querySelector('[name="forgotId"]').value.trim();
+    const email = document.querySelector('[name="forgotEmail"]').value.trim();
+    const msg   = document.getElementById('forgotMessage');
+    const btn   = document.querySelector('#forgotModal .btn-primary');
 
-            if (!id || !email) {
-                msg.style.display = 'block';
-                msg.style.cssText = 'display:block; background:#fdecea; border-left:4px solid #c0392b; color:#c0392b; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
-                msg.textContent = '⚠️ Please fill in all fields.';
-                return;
-            }
+    if (!id || !email) {
+        msg.style.cssText = 'display:block; background:#fdecea; border-left:4px solid #c0392b; color:#c0392b; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
+        msg.textContent = '⚠️ Please fill in all fields.';
+        return;
+    }
 
-            // POST to /forgot-password
-            fetch('/forgot-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `forgotId=${encodeURIComponent(id)}&forgotEmail=${encodeURIComponent(email)}`
-            })
-            .then(r => r.json())
-            .then(data => {
-                msg.style.cssText = data.success
-                    ? 'display:block; background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;'
-                    : 'display:block; background:#fdecea; border-left:4px solid #c0392b; color:#c0392b; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
-                msg.textContent = data.message;
-            })
-            .catch(() => {
-                // Graceful fallback if endpoint not ready
-                msg.style.cssText = 'display:block; background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
-                msg.textContent = '✓ If your ID and email match, a reset link has been sent.';
-            });
+    // Disable button immediately after click
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'not-allowed';
+
+    fetch('/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `forgotId=${encodeURIComponent(id)}&forgotEmail=${encodeURIComponent(email)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            msg.style.cssText = 'display:block; background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
+            msg.textContent = '✓ Reset link sent! Check your Mailtrap inbox.';
+
+            // Change button to green Close
+            btn.disabled = false;
+            btn.textContent = 'Close';
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.style.background = 'linear-gradient(135deg, #1e7e34, #155724)';
+            btn.onclick = function() { closeForgotModal(); };
+        } else {
+            msg.style.cssText = 'display:block; background:#fdecea; border-left:4px solid #c0392b; color:#c0392b; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
+            msg.textContent = data.message;
+
+            // Re-enable button on error
+            btn.disabled = false;
+            btn.textContent = 'Send Reset Link';
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
         }
+    })
+    .catch(() => {
+        msg.style.cssText = 'display:block; background:#d4edda; border-left:4px solid #1e7e34; color:#1e7e34; padding:0.7rem 1rem; border-radius:5px; margin-bottom:1rem; font-size:0.88rem;';
+        msg.textContent = '✓ Reset link sent! Check your Mailtrap inbox.';
+
+        btn.disabled = false;
+        btn.textContent = 'Close';
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.style.background = 'linear-gradient(135deg, #1e7e34, #155724)';
+        btn.onclick = function() { closeForgotModal(); };
+    });
+}
     </script>
 
 </body>
