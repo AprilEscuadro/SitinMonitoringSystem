@@ -220,12 +220,12 @@ footer { margin-left: 240px; transition: margin-left 0.3s ease; }
         .notif-btn svg { width: 18px; height: 18px; fill: #555; }
         .notif-badge { position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; font-size: 10px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #0F3E7D; line-height: 1; padding: 0 2px; }
 
-        .notif-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 46px; width: 300px; background: white; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); z-index: 3000; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; animation: dropIn 0.18s ease; }
+        .notif-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 380px; max-width: 380px; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); z-index: 6000; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); animation: dropIn 0.18s ease; }
         .notif-dropdown.open { display: block; }
         .notif-header { background: #0F3E7D; color: white; padding: 0.75rem 1rem; font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
         .notif-mark-all { font-size: 0.78rem; font-weight: 400; color: #F4B942; cursor: pointer; background: none; border: none; font-family: Arial, sans-serif; }
         .notif-mark-all:hover { text-decoration: underline; }
-        .notif-list { max-height: 300px; overflow-y: auto; }
+        .notif-list { max-height: 300px; overflow-y: auto; overflow-x: hidden; }
         .notif-item { display: flex; gap: 10px; padding: 0.75rem 1rem; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
         .notif-item:last-child { border-bottom: none; }
         .notif-item:hover { background: #f5f8ff; }
@@ -233,7 +233,7 @@ footer { margin-left: 240px; transition: margin-left 0.3s ease; }
         .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #0F3E7D; flex-shrink: 0; margin-top: 5px; }
         .notif-text { flex: 1; }
         .notif-title { font-size: 0.88rem; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
-        .notif-body  { font-size: 0.8rem; color: #666; line-height: 1.4; }
+        .notif-body { font-size: 0.8rem; color: #666; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
         .notif-time  { font-size: 0.75rem; color: #aaa; margin-top: 3px; }
         .notif-empty { text-align: center; padding: 2rem 1rem; color: #aaa; font-size: 0.88rem; }
         .notif-footer { padding: 0.6rem 1rem; text-align: center; border-top: 1px solid #f0f0f0; background: #fafafa; }
@@ -959,6 +959,7 @@ footer.sidebar-collapsed { margin-left: 0; }
             <span class="topbar-pagetitle">Sit-in Monitoring System</span>
         </div>
         <div class="header-actions">
+            <div style="position:relative;">
             <button class="notif-btn" id="notifBtn" onclick="toggleNotif()" aria-label="Notifications">
                 <svg viewBox="0 0 24 24"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 0 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
                 <span class="notif-badge" id="notifBadge" {% if unread_notif_count + unread_ann_count == 0 %}style="display:none;"{% endif %}>{{ unread_notif_count + unread_ann_count }}</span>
@@ -1016,6 +1017,7 @@ footer.sidebar-collapsed { margin-left: 0; }
                         <div class="notif-empty">No reservation updates yet.</div>
                     {% endif %}
                 </div>
+            </div>
             </div>
 
             <div style="position:relative;" id="studentAvatarWrap">
@@ -1250,7 +1252,7 @@ footer.sidebar-collapsed { margin-left: 0; }
                         <label class="field-label">ID Number <span style="color:#e74c3c;">*</span></label>
                         <input type="text" name="idNumber" id="f_idNumber" class="field-input" required
                             value="{{ student.idNumber }}" maxlength="8" inputmode="numeric"
-                            oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                            readonly style="background:#f9f9f9;color:#777;cursor:not-allowed;">
                     </div>
 
                     <div>

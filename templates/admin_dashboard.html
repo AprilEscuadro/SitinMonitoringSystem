@@ -1330,7 +1330,7 @@ footer.sidebar-collapsed { margin-left: 0; }
             </div>
             <div style="flex:1;">
                 <p style="font-size:0.75rem;color:#888;font-weight:700;margin:0 0 0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Students Registered</p>
-                <p style="font-size:1.5rem;font-weight:800;color:#111;margin:0;line-height:1;">{{ students|length }}</p>
+                <p style="font-size:1.5rem;font-weight:800;color:#0F3E7D;margin:0;line-height:1;">{{ students|length }}</p>
                 <p style="font-size:0.78rem;color:#6366f1;margin:0.25rem 0 0;font-weight:600;">Total registered</p>
             </div>
             <span style="color:#ccc;font-size:1.2rem;">›</span>
@@ -1342,7 +1342,7 @@ footer.sidebar-collapsed { margin-left: 0; }
             </div>
             <div style="flex:1;">
                 <p style="font-size:0.75rem;color:#888;font-weight:700;margin:0 0 0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Currently Sit-in</p>
-                <p style="font-size:2rem;font-weight:800;color:#111;margin:0;line-height:1;">{{ active_count }}</p>
+                <p style="font-size:2rem;font-weight:800;color:#0F3E7D;margin:0;line-height:1;">{{ active_count }}</p>
                 <p style="font-size:0.78rem;color:#10b981;margin:0.25rem 0 0;font-weight:600;">Active now</p>
             </div>
             <span style="color:#ccc;font-size:1.2rem;">›</span>
@@ -1354,7 +1354,7 @@ footer.sidebar-collapsed { margin-left: 0; }
             </div>
             <div style="flex:1;">
                 <p style="font-size:0.75rem;color:#888;font-weight:700;margin:0 0 0.3rem;text-transform:uppercase;letter-spacing:0.05em;">Total Sit-in</p>
-                <p style="font-size:2rem;font-weight:800;color:#111;margin:0;line-height:1;">{{ sessions|length }}</p>
+                <p style="font-size:2rem;font-weight:800;color:#0F3E7D;margin:0;line-height:1;">{{ sessions|length }}</p>
                 <p style="font-size:0.78rem;color:#3b82f6;margin:0.25rem 0 0;font-weight:600;">All sessions</p>
             </div>
             <span style="color:#ccc;font-size:1.2rem;">›</span>
@@ -8492,7 +8492,7 @@ if (_attachLabel && _attachTip) {
         </div>
 
         <!-- Document Body -->
-        <div style="flex:1;overflow-y:auto;padding:2rem 2.5rem;background:white;" id="swDocBody">
+        <div style="flex:1;overflow-y:auto;padding:2rem 2.5rem;background:white;padding-bottom:0.5rem;" id="swDocBody">
 
             <!-- Each Lab Panel -->
             <div id="sw-524" class="sw-lab-panel">
@@ -8510,11 +8510,13 @@ if (_attachLabel && _attachTip) {
                     </thead>
                     <tbody id="swBody-524"></tbody>
                 </table>
+            <div style="position:sticky;bottom:0;background:linear-gradient(135deg,#E6F1FB,#ddeeff);padding:0.75rem 0;margin:0 -2.5rem -0.5rem;padding-left:2.5rem;padding-right:2.5rem;" class="sw-no-print">
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
-                    <input type="text" id="sw-name-524" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <input type="text" id="sw-ver-524" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <button onclick="addSwRow('524')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                    <input type="text" id="sw-name-524" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-524" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('524')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
                 </div>
+            </div>
             </div>
 
             <div id="sw-526" class="sw-lab-panel" style="display:none;">
@@ -8532,11 +8534,13 @@ if (_attachLabel && _attachTip) {
                     </thead>
                     <tbody id="swBody-526"></tbody>
                 </table>
+            <div style="position:sticky;bottom:0;background:linear-gradient(135deg,#E6F1FB,#ddeeff);padding:0.75rem 0;margin:0 -2.5rem -0.5rem;padding-left:2.5rem;padding-right:2.5rem;" class="sw-no-print">
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
-                    <input type="text" id="sw-name-526" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <input type="text" id="sw-ver-526" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <button onclick="addSwRow('526')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                    <input type="text" id="sw-name-526" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-526" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('526')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
                 </div>
+            </div>
             </div>
 
             <div id="sw-528" class="sw-lab-panel" style="display:none;">
@@ -8554,11 +8558,13 @@ if (_attachLabel && _attachTip) {
                     </thead>
                     <tbody id="swBody-528"></tbody>
                 </table>
+            <div style="position:sticky;bottom:0;background:linear-gradient(135deg,#E6F1FB,#ddeeff);padding:0.75rem 0;margin:0 -2.5rem -0.5rem;padding-left:2.5rem;padding-right:2.5rem;" class="sw-no-print">
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
-                    <input type="text" id="sw-name-528" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <input type="text" id="sw-ver-528" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <button onclick="addSwRow('528')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                    <input type="text" id="sw-name-528" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-528" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('528')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
                 </div>
+            </div>
             </div>
 
             <div id="sw-530" class="sw-lab-panel" style="display:none;">
@@ -8576,11 +8582,13 @@ if (_attachLabel && _attachTip) {
                     </thead>
                     <tbody id="swBody-530"></tbody>
                 </table>
+            <div style="position:sticky;bottom:0;background:linear-gradient(135deg,#E6F1FB,#ddeeff);padding:0.75rem 0;margin:0 -2.5rem -0.5rem;padding-left:2.5rem;padding-right:2.5rem;" class="sw-no-print">
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
-                    <input type="text" id="sw-name-530" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <input type="text" id="sw-ver-530" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <button onclick="addSwRow('530')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                    <input type="text" id="sw-name-530" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-530" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('530')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
                 </div>
+            </div>
             </div>
 
             <div id="sw-542" class="sw-lab-panel" style="display:none;">
@@ -8598,11 +8606,13 @@ if (_attachLabel && _attachTip) {
                     </thead>
                     <tbody id="swBody-542"></tbody>
                 </table>
+            <div style="position:sticky;bottom:0;background:linear-gradient(135deg,#E6F1FB,#ddeeff);padding:0.75rem 0;margin:0 -2.5rem -0.5rem;padding-left:2.5rem;padding-right:2.5rem;" class="sw-no-print">
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
-                    <input type="text" id="sw-name-542" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <input type="text" id="sw-ver-542" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <button onclick="addSwRow('542')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                    <input type="text" id="sw-name-542" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-542" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('542')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
                 </div>
+            </div>
             </div>
 
             <div id="sw-544" class="sw-lab-panel" style="display:none;">
@@ -8620,11 +8630,13 @@ if (_attachLabel && _attachTip) {
                     </thead>
                     <tbody id="swBody-544"></tbody>
                 </table>
+            <div style="position:sticky;bottom:0;background:linear-gradient(135deg,#E6F1FB,#ddeeff);padding:0.75rem 0;margin:0 -2.5rem -0.5rem;padding-left:2.5rem;padding-right:2.5rem;" class="sw-no-print">
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;" class="sw-no-print">
-                    <input type="text" id="sw-name-544" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <input type="text" id="sw-ver-544" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
-                    <button onclick="addSwRow('544')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+                    <input type="text" id="sw-name-544" placeholder="Software name..." style="flex:2;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <input type="text" id="sw-ver-544" placeholder="Version..." style="flex:1;padding:0.45rem 0.75rem;border:2px solid #0F3E7D;border-radius:8px;font-size:0.85rem;font-family:Arial,sans-serif;">
+                    <button onclick="addSwRow('544')" style="background:#0F3E7D;color:white;border:none;padding:0.45rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">Add</button>
                 </div>
+            </div>
             </div>
 
         </div><!-- end swDocBody -->
