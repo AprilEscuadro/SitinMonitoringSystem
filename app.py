@@ -239,9 +239,9 @@ def register():
     if request.method == 'GET':
         return render_template('register.html', error=None, form_data={})
     id_number    = request.form.get('idNumber', '').strip()
-    first_name   = request.form.get('firstName', '').strip()
-    last_name    = request.form.get('lastName', '').strip()
-    middle_name  = request.form.get('middleName', '').strip()
+    first_name   = request.form.get('firstName', '').strip().upper()
+    last_name    = request.form.get('lastName', '').strip().upper()
+    middle_name  = request.form.get('middleName', '').strip().upper()
     course_level = request.form.get('yearLevel', '').strip()
     password     = request.form.get('password', '').strip()
     confirm_pass = request.form.get('confirmPassword', '').strip()
