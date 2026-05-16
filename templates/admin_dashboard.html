@@ -1658,17 +1658,45 @@ onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(15,62,
     <input type="text" id="lbScoreSearch" placeholder="Search student..."
         class="table-search-input"
         oninput="buildLBScoreTable()">
-    <select id="lbFilterCourse" class="filter-select" onchange="buildLBScoreTable()">
-        <option value="">All Courses</option>
+<select id="lbFilterCourse" class="filter-select" onchange="buildLBScoreTable()">
+    <option value="">All Courses</option>
+    <optgroup label="CCS">
         <option value="BSIT">BSIT</option>
         <option value="BSCS">BSCS</option>
         <option value="BSCoE">BSCoE</option>
         <option value="CISCO">CISCO</option>
+    </optgroup>
+    <optgroup label="Engineering">
         <option value="BSCE">BSCE</option>
         <option value="BSME">BSME</option>
         <option value="BSEE">BSEE</option>
         <option value="BSIE">BSIE</option>
-    </select>
+        <option value="BSNAME">BSNAME</option>
+    </optgroup>
+    <optgroup label="Education">
+        <option value="BEED">BEED</option>
+        <option value="BSED">BSED</option>
+    </optgroup>
+    <optgroup label="Criminal Justice">
+        <option value="BSCRIM">BSCRIM</option>
+    </optgroup>
+    <optgroup label="Business">
+        <option value="BSCOM">BSCOM</option>
+        <option value="BSA">BSA</option>
+        <option value="BSCA">BSCA</option>
+        <option value="BSHRM">BSHRM</option>
+    </optgroup>
+    <optgroup label="Arts and Sciences">
+        <option value="ABPOLSCI">ABPOLSCI</option>
+        <option value="ABENG">ABENG</option>
+        <option value="BSINDPSY">BSINDPSY</option>
+    </optgroup>
+    <optgroup label="Vocational">
+        <option value="COMPSEC">COMPSEC</option>
+        <option value="ECS">ECS</option>
+        <option value="KOREAN">KOREAN</option>
+    </optgroup>
+</select>
 </div>
         </div>
         <div class="table-scroll">
@@ -6681,32 +6709,36 @@ function buildLBScoreTable() {
             tbody.innerHTML = '<tr><td colspan="10" class="no-data">No evaluation data yet.</td></tr>';
             return;
         }
-const courseF = document.getElementById('lbFilterCourse')?.value || '';
-const searchQ = document.getElementById('lbScoreSearch')?.value.toLowerCase().trim() || '';
-if (courseF) data.scores = data.scores.filter(s => s.course === courseF);
-if (searchQ) data.scores = data.scores.filter(s =>
-    (s.firstName + ' ' + s.lastName).toLowerCase().includes(searchQ) ||
-    s.idNumber?.toString().includes(searchQ)
-);
-        
 
-        // Sort by final score descending
+        // Sort by final score descending FIRST
         data.scores.sort((a, b) => b.final_score - a.final_score);
 
+        // Assign global rank BEFORE any filtering
+        data.scores.forEach((s, i) => { s.globalRank = i + 1; });
+
+        // NOW apply filters
+        const courseF = document.getElementById('lbFilterCourse')?.value || '';
+        const searchQ = document.getElementById('lbScoreSearch')?.value.toLowerCase().trim() || '';
+        if (courseF) data.scores = data.scores.filter(s => s.course === courseF);
+        if (searchQ) data.scores = data.scores.filter(s =>
+            (s.firstName + ' ' + s.lastName).toLowerCase().includes(searchQ) ||
+            s.idNumber?.toString().includes(searchQ)
+        );
+
         const medals = ['🥇','🥈','🥉'];
-        tbody.innerHTML = data.scores.map((s, i) => {
-            const rank = i + 1;
-            const rankDisplay = rank <= 3
-                ? `<span style="font-size:1.1rem;">${medals[i]}</span>`
-                : `<span style="font-weight:700;color:#555;">#${rank}</span>`;
+        tbody.innerHTML = data.scores.map((s) => {
+            const globalRank = s.globalRank;
+            const rankDisplay = globalRank <= 3
+                ? `<span style="font-size:1.1rem;">${medals[globalRank-1]}</span>`
+                : `<span style="font-weight:700;color:#555;">#${globalRank}</span>`;
 
             const hrs  = Math.floor(s.total_minutes / 60);
             const mins = s.total_minutes % 60;
             const hrsDisplay = hrs > 0 ? `${hrs}hr ${mins}m` : `${mins}m`;
 
-            return `<tr style="${rank <= 3 ? 'background:rgba(244,185,66,0.07);' : ''}">
+            return `<tr style="${globalRank <= 3 ? 'background:rgba(244,185,66,0.07);' : ''}">
                 <td style="text-align:center;">${rankDisplay}</td>
-                <td style="font-weight:${rank<=3?'700':'400'};color:${rank===1?'#0F3E7D':'inherit'};">
+                <td style="font-weight:${globalRank<=3?'700':'400'};color:${globalRank===1?'#0F3E7D':'inherit'};">
                     ${s.lastName}, ${s.firstName}
                 </td>
                 <td><span style="background:#E6F1FB;color:#0F3E7D;padding:0.2rem 0.6rem;border-radius:10px;font-size:0.78rem;font-weight:700;">${s.course}</span></td>
@@ -6750,15 +6782,16 @@ function renderLBScoreTable() {
 
     tbody.innerHTML = _lbScoreData.slice(start, end).map((s, i) => {
         const rank = start + i + 1;
-        const rankDisplay = rank <= 3
-            ? `<span style="font-size:1.1rem;">${medals[rank-1]}</span>`
-            : `<span style="font-weight:700;color:#555;">#${rank}</span>`;
+        const globalRank = s.globalRank || rank;
+        const rankDisplay = globalRank <= 3
+            ? `<span style="font-size:1.1rem;">${medals[globalRank-1]}</span>`
+            : `<span style="font-weight:700;color:#555;">#${globalRank}</span>`;
         const hrs  = Math.floor(s.total_minutes / 60);
         const mins = s.total_minutes % 60;
         const hrsDisplay = hrs > 0 ? `${hrs}hr ${mins}m` : `${mins}m`;
-        return `<tr style="${rank <= 3 ? 'background:rgba(244,185,66,0.07);' : ''}">
+        return `<tr style="${globalRank <= 3 ? 'background:rgba(244,185,66,0.07);' : ''}">
             <td style="text-align:center;">${rankDisplay}</td>
-            <td style="font-weight:${rank<=3?'700':'400'};color:${rank===1?'#0F3E7D':'inherit'};">
+            <td style="font-weight:${globalRank<=3?'700':'400'};color:${globalRank===1?'#0F3E7D':'inherit'};">
                 ${s.lastName}, ${s.firstName}
             </td>
             <td><span style="background:#E6F1FB;color:#0F3E7D;padding:0.2rem 0.6rem;border-radius:10px;font-size:0.78rem;font-weight:700;">${s.course}</span></td>
@@ -7695,121 +7728,74 @@ document.addEventListener('click', function(e) {
 // ── NEW Software Availability JS ──
 const swData = { '524':[], '526':[], '528':[], '530':[], '542':[], '544':[] };
 
-function renderSwTable(lab) {
+function renderSwTable(lab, items) {
     const tbody = document.getElementById('swBody-' + lab);
     if (!tbody) return;
-    if (swData[lab].length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1rem;font-size:0.8rem;font-style:italic;">No software added yet. Use the fields below to add.</td></tr>';
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1rem;font-size:0.8rem;font-style:italic;">No software added yet.</td></tr>';
         return;
     }
-    tbody.innerHTML = swData[lab].map((item, i) => `
-        <tr class="${i % 2 === 0 ? 'sw-row-even' : 'sw-row-odd'}" id="sw-row-${lab}-${i}">
-            <td style="padding:0.5rem 0.75rem;color:#555;font-weight:700;font-size:0.8rem;">${i + 1}</td>
-            <td style="padding:0.5rem 0.75rem;font-size:0.8rem;" id="sw-name-cell-${lab}-${i}">
+    tbody.innerHTML = items.map((item, i) => `
+        <tr id="sw-row-${lab}-${item.id}">
+            <td style="padding:0.5rem 0.75rem;color:#555;font-weight:700;font-size:0.8rem;">${i+1}</td>
+            <td style="padding:0.5rem 0.75rem;font-size:0.8rem;" id="sw-name-cell-${lab}-${item.id}">
                 <span>${item.name}</span>
             </td>
-            <td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#555;" id="sw-ver-cell-${lab}-${i}">
+            <td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#555;" id="sw-ver-cell-${lab}-${item.id}">
                 <span>${item.version || '—'}</span>
             </td>
             <td style="padding:0.45rem 0.6rem;text-align:center;white-space:nowrap;" class="sw-no-print">
-                <button id="sw-edit-btn-${lab}-${i}" onclick="startSwEdit('${lab}', ${i})"
+                <button id="sw-edit-btn-${lab}-${item.id}" onclick="startSwEdit('${lab}', ${item.id}, '${item.name.replace(/'/g,"\\'")}', '${(item.version||'').replace(/'/g,"\\'")}') "
                     style="background:#e8f0fb;color:#0F3E7D;border:1px solid #b3c9f5;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.75rem;font-weight:700;margin-right:3px;">✏️ Edit</button>
-                <button onclick="confirmRemoveSwRow('${lab}', ${i})"
+                <button onclick="confirmRemoveSwRow('${lab}', ${item.id}, '${item.name.replace(/'/g,"\\'")}') "
                     style="background:#fdecea;color:#c0392b;border:1px solid #f5b7b1;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;font-size:0.75rem;font-weight:700;">🗑️ Delete</button>
             </td>
         </tr>`).join('');
 }
-function startSwEdit(lab, idx) {
-    const item     = swData[lab][idx];
-    const nameCell = document.getElementById(`sw-name-cell-${lab}-${idx}`);
-    const verCell  = document.getElementById(`sw-ver-cell-${lab}-${idx}`);
-    const editBtn  = document.getElementById(`sw-edit-btn-${lab}-${idx}`);
 
-    nameCell.innerHTML = `<input type="text" id="sw-edit-name-${lab}-${idx}"
-        value="${item.name.replace(/"/g,'&quot;')}"
-        style="width:100%;padding:0.3rem 0.55rem;border:1.5px solid #0F3E7D;border-radius:6px;font-size:0.8rem;font-family:Arial,sans-serif;outline:none;box-sizing:border-box;">`;
-    verCell.innerHTML  = `<input type="text" id="sw-edit-ver-${lab}-${idx}"
-        value="${(item.version||'').replace(/"/g,'&quot;')}"
-        style="width:100%;padding:0.3rem 0.55rem;border:1.5px solid #0F3E7D;border-radius:6px;font-size:0.8rem;font-family:Arial,sans-serif;outline:none;box-sizing:border-box;">`;
-
+function startSwEdit(lab, swId, currentName, currentVersion) {
+    const nameCell = document.getElementById(`sw-name-cell-${lab}-${swId}`);
+    const verCell  = document.getElementById(`sw-ver-cell-${lab}-${swId}`);
+    const editBtn  = document.getElementById(`sw-edit-btn-${lab}-${swId}`);
+    nameCell.innerHTML = `<input type="text" id="sw-edit-name-${lab}-${swId}" value="${currentName}" style="width:100%;padding:0.3rem 0.55rem;border:1.5px solid #0F3E7D;border-radius:6px;font-size:0.8rem;font-family:Arial,sans-serif;outline:none;box-sizing:border-box;">`;
+    verCell.innerHTML  = `<input type="text" id="sw-edit-ver-${lab}-${swId}" value="${currentVersion}" style="width:100%;padding:0.3rem 0.55rem;border:1.5px solid #0F3E7D;border-radius:6px;font-size:0.8rem;font-family:Arial,sans-serif;outline:none;box-sizing:border-box;">`;
     editBtn.innerHTML  = '💾 Save';
-    editBtn.style.background   = '#eafaf1';
-    editBtn.style.color        = '#1e7e34';
-    editBtn.style.borderColor  = '#a9dfbf';
-    editBtn.setAttribute('onclick', `saveSwEdit('${lab}', ${idx})`);
-
-    document.getElementById(`sw-edit-name-${lab}-${idx}`).focus();
+    editBtn.style.background = '#eafaf1'; editBtn.style.color = '#1e7e34'; editBtn.style.borderColor = '#a9dfbf';
+    editBtn.setAttribute('onclick', `saveSwEdit('${lab}', ${swId})`);
 }
 
-function saveSwEdit(lab, idx) {
-    const nameInput = document.getElementById(`sw-edit-name-${lab}-${idx}`);
-    const verInput  = document.getElementById(`sw-edit-ver-${lab}-${idx}`);
-    if (!nameInput) return;
-    const name = nameInput.value.trim();
-    const ver  = verInput ? verInput.value.trim() : '';
-
-    if (!name) {
-        nameInput.style.borderColor = '#c0392b';
-        nameInput.placeholder = 'Name is required!';
-        nameInput.focus();
-        return;
-    }
-
-    swData[lab][idx].name    = name;
-    swData[lab][idx].version = ver;
-    saveSwData();
-    renderSwTable(lab);
-    showToast('✓ Software updated.', 'success');
+function saveSwEdit(lab, swId) {
+    const name    = document.getElementById(`sw-edit-name-${lab}-${swId}`)?.value.trim();
+    const version = document.getElementById(`sw-edit-ver-${lab}-${swId}`)?.value.trim() || '';
+    if (!name) return;
+    const fd = new FormData();
+    fd.append('id', swId); fd.append('name', name); fd.append('version', version);
+    fetch('/admin/software/update', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(data => { if (data.success) { loadSwLab(lab); showToast('✓ Software updated.', 'success'); } });
 }
+
 function addSwRow(lab) {
     const nameEl = document.getElementById('sw-name-' + lab);
     const verEl  = document.getElementById('sw-ver-' + lab);
-    const name = nameEl.value.trim();
-    const ver  = verEl.value.trim();
+    const name   = nameEl.value.trim();
+    const version= verEl.value.trim();
 
-    // Clear previous errors
-    nameEl.style.borderColor = '#ddd';
-    verEl.style.borderColor  = '#ddd';
+    if (!name) { nameEl.style.borderColor='#c0392b'; nameEl.focus(); setTimeout(()=>nameEl.style.borderColor='',2000); return; }
+    if (!version) { verEl.style.borderColor='#c0392b'; verEl.focus(); setTimeout(()=>verEl.style.borderColor='',2000); return; }
 
-    let hasError = false;
-
-    if (!name) {
-        nameEl.style.borderColor = '#c0392b';
-        nameEl.placeholder = '⚠️ Software name is required!';
-        nameEl.style.color = '#c0392b';
-        setTimeout(() => {
-            nameEl.style.borderColor = '#ddd';
-            nameEl.placeholder = 'Software name...';
-            nameEl.style.color = '';
-        }, 2500);
-        nameEl.focus();
-        hasError = true;
-    }
-
-    if (!ver) {
-        verEl.style.borderColor = '#c0392b';
-        verEl.placeholder = '⚠️ Version required!';
-        verEl.style.color = '#c0392b';
-        setTimeout(() => {
-            verEl.style.borderColor = '#ddd';
-            verEl.placeholder = 'Version...';
-            verEl.style.color = '';
-        }, 2500);
-        if (!hasError) verEl.focus();
-        hasError = true;
-    }
-
-    if (hasError) {
-        return;
-    }
-
-    swData[lab].push({ name, version: ver });
-    nameEl.value = '';
-    verEl.value  = '';
-    renderSwTable(lab);
-    saveSwData();
-    nameEl.focus();
+    const fd = new FormData();
+    fd.append('lab', lab); fd.append('name', name); fd.append('version', version);
+    fetch('/admin/software/add', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            nameEl.value = ''; verEl.value = '';
+            loadSwLab(lab);
+        }
+    });
 }
+
 
 function removeSwRow(lab, idx) {
     swData[lab].splice(idx, 1);
@@ -7829,23 +7815,14 @@ function saveSwData() {
 }
 
 function loadSwData() {
-    const saved = localStorage.getItem('swAvailData_v2');
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            Object.keys(parsed).forEach(lab => {
-                if (swData[lab] !== undefined) swData[lab] = parsed[lab];
-            });
-        } catch(e) {}
-    }
-    ['524','526','528','530','542','544'].forEach(lab => renderSwTable(lab));
+    ['524','526','528','530','542','544'].forEach(lab => loadSwLab(lab));
+}
 
-    // Allow Enter key on sw inputs
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('sw-')) {
-            const labMatch = e.target.id.match(/sw-(?:name|ver)-(\d+)/);
-            if (labMatch) addSwRow(labMatch[1]);
-        }
+function loadSwLab(lab) {
+    fetch('/admin/software/get?lab=' + lab)
+    .then(r => r.json())
+    .then(data => {
+        renderSwTable(lab, data.items || []);
     });
 }
 
@@ -7853,19 +7830,22 @@ function downloadSwPDF() {
     showModal('confirmSwPDFModal');
 }
 
-function downloadSwPDFConfirmed() {
+async function downloadSwPDFConfirmed() {
     closeModal('confirmSwPDFModal');
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const labs = ['524','526','528','530','542','544'];
     let isFirst = true;
 
-    labs.forEach(lab => {
-        if (swData[lab].length === 0) return;
+    for (const lab of labs) {
+        const response = await fetch('/admin/software/get?lab=' + lab);
+        const data = await response.json();
+        const items = data.items || [];
+        if (items.length === 0) continue;
+
         if (!isFirst) doc.addPage();
         isFirst = false;
 
-        // Header
         doc.setFillColor(15, 62, 125);
         doc.rect(0, 0, 210, 28, 'F');
         doc.setTextColor(255, 255, 255);
@@ -7876,8 +7856,7 @@ function downloadSwPDFConfirmed() {
         doc.setFontSize(8);
         doc.text('University of Cebu  |  Generated: ' + new Date().toLocaleString(), 105, 24, { align: 'center' });
 
-        // Table
-        const rows = swData[lab].map((item, i) => [i + 1, item.name, item.version || '—']);
+        const rows = items.map((item, i) => [i + 1, item.name, item.version || '—']);
         doc.autoTable({
             startY: 32,
             head: [['#', 'Software Name', 'Version']],
@@ -7892,7 +7871,7 @@ function downloadSwPDFConfirmed() {
                 doc.text('CCS Sit-in Monitoring System  |  University of Cebu  © 2026', 105, 290, { align: 'center' });
             }
         });
-    });
+    }
 
     if (isFirst) {
         doc.setFontSize(12); doc.setTextColor(100,100,100);
@@ -7903,15 +7882,19 @@ function downloadSwPDFConfirmed() {
 }
 
 document.addEventListener('DOMContentLoaded', loadSwData);
-function confirmRemoveSwRow(lab, idx) {
-    const name = swData[lab][idx]?.name || 'this software';
+
+function confirmRemoveSwRow(lab, swId, name) {
     document.getElementById('swDeleteName').textContent = name;
     document.getElementById('swDeleteConfirmBtn').onclick = function() {
         closeModal('confirmSwDeleteModal');
-        removeSwRow(lab, idx);
+        const fd = new FormData(); fd.append('id', swId);
+        fetch('/admin/software/delete', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(data => { if (data.success) { loadSwLab(lab); showToast('✓ Software removed.', 'success'); } });
     };
     showModal('confirmSwDeleteModal');
 }
+
 const _attachLabel = document.getElementById('annAttachLabel');
 const _attachTip   = document.getElementById('attachTooltip');
 if (_attachLabel && _attachTip) {

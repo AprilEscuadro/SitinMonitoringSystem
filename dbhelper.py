@@ -1178,3 +1178,52 @@ def mark_token_used(token):
     conn.execute("UPDATE reset_tokens SET used=1 WHERE token=?", (token,))
     conn.commit()
     conn.close()
+
+def init_software_table():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS lab_software (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            lab        TEXT NOT NULL,
+            name       TEXT NOT NULL,
+            version    TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def get_software_by_lab(lab):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, name, version FROM lab_software WHERE lab=? ORDER BY id",
+        (lab,)
+    ).fetchall()
+    conn.close()
+    return rows
+
+def add_software(lab, name, version):
+    conn = get_db()
+    cursor = conn.execute(
+        "INSERT INTO lab_software (lab, name, version) VALUES (?,?,?)",
+        (lab, name, version)
+    )
+    sw_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return sw_id
+
+def update_software(sw_id, name, version):
+    conn = get_db()
+    conn.execute(
+        "UPDATE lab_software SET name=?, version=? WHERE id=?",
+        (name, version, sw_id)
+    )
+    conn.commit()
+    conn.close()
+
+def delete_software(sw_id):
+    conn = get_db()
+    conn.execute("DELETE FROM lab_software WHERE id=?", (sw_id,))
+    conn.commit()
+    conn.close()

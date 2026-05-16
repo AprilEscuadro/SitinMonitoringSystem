@@ -1647,7 +1647,12 @@ footer.sidebar-collapsed { margin-left: 0; }
     {% else %}
     <div class="admin-card" style="margin-bottom:1.5rem; max-width:100%;">
     {% endif %}
-    <h3 style="font-size:1rem; font-weight:700; color:#0F3E7D; margin-bottom:1.2rem; padding-bottom:0.5rem; border-bottom:2px solid #e8f0fb;">New Reservation</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;padding-bottom:0.5rem;border-bottom:2px solid #e8f0fb;">
+        <h3 style="font-size:1rem;font-weight:700;color:#0F3E7D;margin:0;">New Reservation</h3>
+        <button onclick="openSwAvailModal()" style="background:white;color:#0F3E7D;border:1.5px solid rgba(15,62,125,0.2);padding:0.35rem 0.9rem;border-radius:20px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 3px 10px rgba(15,62,125,0.15);transition:all 0.18s ease;display:flex;align-items:center;gap:5px;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            🖥️ Software Availability per Lab
+        </button>
+    </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
 
         <!-- LEFT: Form Fields -->
@@ -3823,5 +3828,178 @@ function openAvgDurationModal() {
         </div>
     </div>
 </div>
+<!-- SOFTWARE AVAILABILITY MODAL (Student Side) -->
+<div class="modal-overlay" id="swAvailStudentModal" style="display:none;z-index:9999;">
+    <div style="background:white;border-radius:16px;width:94%;max-width:860px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);border:1px solid #ddd;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0a1e50,#0F3E7D);padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="color:white;font-size:1rem;font-weight:800;">🖥️ Software Availability per Lab</span>
+            <button onclick="closeModal('swAvailStudentModal')" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <!-- Tab Bar -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0.85rem 1.25rem;border-bottom:1px solid #eee;flex-shrink:0;background:#fafafa;">
+            <button class="sw-stud-lab-btn sw-stud-lab-active" onclick="switchSwStudLab('sw-stud-524',this)">Lab 524</button>
+            <button class="sw-stud-lab-btn" onclick="switchSwStudLab('sw-stud-526',this)">Lab 526</button>
+            <button class="sw-stud-lab-btn" onclick="switchSwStudLab('sw-stud-528',this)">Lab 528</button>
+            <button class="sw-stud-lab-btn" onclick="switchSwStudLab('sw-stud-530',this)">Lab 530</button>
+            <button class="sw-stud-lab-btn" onclick="switchSwStudLab('sw-stud-542',this)">Lab 542</button>
+            <button class="sw-stud-lab-btn" onclick="switchSwStudLab('sw-stud-544',this)">Lab 544</button>
+        </div>
+        <!-- Search -->
+        <div style="padding:0.75rem 1.25rem;border-bottom:1px solid #eee;flex-shrink:0;background:#fafafa;">
+            <input type="text" id="swStudSearch" placeholder="Search software..." oninput="filterSwStudList()"
+                style="width:100%;padding:0.5rem 0.85rem;border:1.5px solid #ddd;border-radius:10px;font-size:0.88rem;font-family:Arial,sans-serif;box-sizing:border-box;outline:none;"
+                onfocus="this.style.borderColor='#0F3E7D'" onblur="this.style.borderColor='#ddd'">
+        </div>
+        <!-- Body -->
+        <div style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;">
+            <div id="sw-stud-524" class="sw-stud-panel">
+                <div id="sw-stud-list-524"></div>
+            </div>
+            <div id="sw-stud-526" class="sw-stud-panel" style="display:none;">
+                <div id="sw-stud-list-526"></div>
+            </div>
+            <div id="sw-stud-528" class="sw-stud-panel" style="display:none;">
+                <div id="sw-stud-list-528"></div>
+            </div>
+            <div id="sw-stud-530" class="sw-stud-panel" style="display:none;">
+                <div id="sw-stud-list-530"></div>
+            </div>
+            <div id="sw-stud-542" class="sw-stud-panel" style="display:none;">
+                <div id="sw-stud-list-542"></div>
+            </div>
+            <div id="sw-stud-544" class="sw-stud-panel" style="display:none;">
+                <div id="sw-stud-list-544"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sw-stud-lab-btn {
+    padding:0.38rem 0.85rem;border:2px solid #185FA5;border-radius:20px;
+    background:white;font-size:0.78rem;font-weight:700;cursor:pointer;
+    color:#0F3E7D;font-family:Arial,sans-serif;transition:all 0.18s;
+}
+.sw-stud-lab-btn:hover { background:#E6F1FB; }
+.sw-stud-lab-btn.sw-stud-lab-active {
+    background:linear-gradient(135deg,#1a5db5,#0F3E7D);
+    color:white;border-color:transparent;
+    box-shadow:0 3px 10px rgba(15,62,125,0.4);
+}
+</style>
+
+<script>
+
+let _swStudCurrentLab = '524';
+let _swStudItems = {};
+
+function openSwAvailModal() {
+    ['524','526','528','530','542','544'].forEach(lab => loadSwStudData(lab));
+    document.getElementById('swAvailStudentModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function switchSwStudLab(panelId, btn) {
+    document.querySelectorAll('.sw-stud-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.sw-stud-lab-btn').forEach(b => b.classList.remove('sw-stud-lab-active'));
+    document.getElementById(panelId).style.display = 'block';
+    btn.classList.add('sw-stud-lab-active');
+    _swStudCurrentLab = panelId.replace('sw-stud-', '');
+    document.getElementById('swStudSearch').value = '';
+    loadSwStudData(_swStudCurrentLab);
+}
+
+function loadSwStudData(lab) {
+    const container = document.getElementById('sw-stud-list-' + lab);
+    if (container) container.innerHTML = '<div style="text-align:center;color:#aaa;padding:1rem;font-size:0.85rem;">Loading...</div>';
+    fetch('/admin/software/get?lab=' + lab)
+    .then(r => r.json())
+    .then(data => {
+        _swStudItems[lab] = data.items || [];
+        renderSwStudList(lab, _swStudItems[lab]);
+    })
+    .catch(() => {
+        if (container) container.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;padding:1rem;">Failed to load.</div>';
+    });
+}
+
+function renderSwStudList(lab, items) {
+    const container = document.getElementById('sw-stud-list-' + lab);
+    if (!container) return;
+    if (items.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#aaa;padding:2rem;font-size:0.88rem;font-style:italic;">No software listed for this lab yet.</div>';
+        return;
+    }
+    container.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+            <thead>
+                <tr style="background:#0F3E7D;color:white;">
+                    <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                    <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                    <th style="padding:0.6rem 0.75rem;text-align:left;width:160px;">Version</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${items.map((item, i) => `
+                    <tr style="${i % 2 === 0 ? 'background:#f5f8ff;' : 'background:white;'}">
+                        <td style="padding:0.6rem 0.75rem;color:#555;font-weight:700;">${i+1}</td>
+                        <td style="padding:0.6rem 0.75rem;color:#1a1a1a;">${item.name}</td>
+                        <td style="padding:0.6rem 0.75rem;color:#555;">${item.version || '—'}</td>
+                    </tr>`).join('')}
+            </tbody>
+        </table>`;
+}
+
+function filterSwStudList() {
+    const q = document.getElementById('swStudSearch').value.toLowerCase().trim();
+    if (!q) {
+        renderSwStudList(_swStudCurrentLab, _swStudItems[_swStudCurrentLab] || []);
+        return;
+    }
+    // Search across ALL labs
+    const allResults = [];
+    ['524','526','528','530','542','544'].forEach(lab => {
+        (_swStudItems[lab] || []).forEach(item => {
+            if (item.name.toLowerCase().includes(q) || (item.version || '').toLowerCase().includes(q)) {
+                allResults.push({ ...item, _lab: lab });
+            }
+        });
+    });
+    // Render with lab prefix in name
+    const container = document.getElementById('sw-stud-list-' + _swStudCurrentLab);
+    if (!container) return;
+    if (allResults.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#aaa;padding:2rem;font-size:0.88rem;font-style:italic;">No software found across all labs.</div>';
+        return;
+    }
+    container.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+            <thead>
+                <tr style="background:#0F3E7D;color:white;">
+                    <th style="padding:0.6rem 0.75rem;text-align:left;width:50px;">#</th>
+                    <th style="padding:0.6rem 0.75rem;text-align:left;">Software Name</th>
+                    <th style="padding:0.6rem 0.75rem;text-align:left;width:160px;">Version</th>
+                    <th style="padding:0.6rem 0.75rem;text-align:left;width:100px;white-space:nowrap;">Lab</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${allResults.map((item, i) => `
+                    <tr style="${i % 2 === 0 ? 'background:#f5f8ff;' : 'background:white;'}">
+                        <td style="padding:0.6rem 0.75rem;color:#555;font-weight:700;">${i+1}</td>
+                        <td style="padding:0.6rem 0.75rem;font-weight:600;color:#1a1a1a;">${item.name}</td>
+                        <td style="padding:0.6rem 0.75rem;color:#555;">${item.version || '—'}</td>
+                        <td style="padding:0.6rem 0.75rem;">
+                            <span style="background:#E6F1FB;color:#0F3E7D;padding:0.2rem 0.55rem;border-radius:10px;font-size:0.78rem;font-weight:700;white-space:nowrap;">Lab ${item._lab}</span>
+                        </td>
+                    </tr>`).join('')}
+            </tbody>
+        </table>`;
+}
+
+document.getElementById('swAvailStudentModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal('swAvailStudentModal');
+});
+</script>
 </body>
 </html>

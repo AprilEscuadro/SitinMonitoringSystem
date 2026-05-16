@@ -32,7 +32,11 @@ from dbhelper import (
       init_reset_tokens_table,
     save_reset_token,
     get_reset_token,
-    mark_token_used,
+    mark_token_used,init_software_table,
+    get_software_by_lab,
+    add_software,
+    update_software,
+    delete_software,
 )
 import sqlite3 as _sqlite3
 from flask_mail import Mail, Message
@@ -2275,6 +2279,48 @@ def public_leaderboard_scores():
         s['duration'] = duration
         sessions_list.append(s)
     sessions = sessions_list
+
+@app.route('/admin/software/get', methods=['GET'])
+def admin_get_software():
+    lab = request.args.get('lab', '').strip()
+    if not lab:
+        return jsonify({'success': False, 'items': []})
+    rows = get_software_by_lab(lab)
+    return jsonify({'success': True, 'items': [{'id': r['id'], 'name': r['name'], 'version': r['version'] or ''} for r in rows]})
+
+@app.route('/admin/software/add', methods=['POST'])
+def admin_add_software():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    lab     = request.form.get('lab', '').strip()
+    name    = request.form.get('name', '').strip()
+    version = request.form.get('version', '').strip()
+    if not lab or not name:
+        return jsonify({'success': False, 'message': 'Lab and name are required.'})
+    sw_id = add_software(lab, name, version)
+    return jsonify({'success': True, 'id': sw_id})
+
+@app.route('/admin/software/update', methods=['POST'])
+def admin_update_software():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    sw_id   = request.form.get('id', '').strip()
+    name    = request.form.get('name', '').strip()
+    version = request.form.get('version', '').strip()
+    if not sw_id or not name:
+        return jsonify({'success': False, 'message': 'ID and name are required.'})
+    update_software(int(sw_id), name, version)
+    return jsonify({'success': True})
+
+@app.route('/admin/software/delete', methods=['POST'])
+def admin_delete_software():
+    if not session.get('admin'):
+        return jsonify({'success': False}), 401
+    sw_id = request.form.get('id', '').strip()
+    if not sw_id:
+        return jsonify({'success': False})
+    delete_software(int(sw_id))
+    return jsonify({'success': True})
 # ══════════════════════════════════════════
 # ROUTE — ADMIN LOGOUT
 # ══════════════════════════════════════════
@@ -2367,6 +2413,7 @@ if __name__ == '__main__':
     init_evaluations_table()
     init_feedback_notifications_table()
     init_reset_tokens_table()
+    init_software_table()
     print("=================================")
     print("CCS Sit-in System Server Running!")
     print("Open: http://localhost:5000")
