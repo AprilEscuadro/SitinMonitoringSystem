@@ -7854,7 +7854,7 @@ async function downloadSwPDFConfirmed() {
         doc.setFontSize(9); doc.setFont('helvetica', 'normal');
         doc.text('College of Computer Studies — Software Availability', 105, 18, { align: 'center' });
         doc.setFontSize(8);
-        doc.text('University of Cebu  |  Generated: ' + new Date().toLocaleString(), 105, 24, { align: 'center' });
+        doc.text('University of Cebu  |  Generated: ' + new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }), 105, 24, { align: 'center' });
 
         const rows = items.map((item, i) => [i + 1, item.name, item.version || '—']);
         doc.autoTable({
@@ -7878,7 +7878,8 @@ async function downloadSwPDFConfirmed() {
         doc.text('No software data added yet.', 105, 140, { align: 'center' });
     }
 
-    doc.save('CCS_Software_Availability_' + new Date().toISOString().slice(0,10) + '.pdf');
+    const phDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    doc.save('CCS_Software_Availability_' + phDate + '.pdf');
 }
 
 document.addEventListener('DOMContentLoaded', loadSwData);
