@@ -225,7 +225,26 @@ footer { margin-left: 240px; transition: margin-left 0.3s ease; }
         .notif-header { background: #0F3E7D; color: white; padding: 0.75rem 1rem; font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
         .notif-mark-all { font-size: 0.78rem; font-weight: 400; color: #F4B942; cursor: pointer; background: none; border: none; font-family: Arial, sans-serif; }
         .notif-mark-all:hover { text-decoration: underline; }
-        .notif-list { max-height: 300px; overflow-y: auto; overflow-x: hidden; }
+        .notif-list { 
+    max-height: 380px;  /* increase if you want more items visible */
+    overflow-y: auto; 
+    overflow-x: hidden; 
+}
+
+    /* Add this to style the scrollbar like your other panels */
+    .notif-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    .notif-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .notif-list::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #F4B942, #0F3E7D);
+        border-radius: 10px;
+    }
+    .notif-list::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #0F3E7D, #F4B942);
+    }
         .notif-item { display: flex; gap: 10px; padding: 0.75rem 1rem; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
         .notif-item:last-child { border-bottom: none; }
         .notif-item:hover { background: #f5f8ff; }
