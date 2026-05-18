@@ -690,11 +690,15 @@ def admin_add_sitin_ajax():
     today = _date.today().isoformat()
     conn_check = _sqlite3.connect('database.db', timeout=10)
 
-    # Check pending reservation
-    existing_res = conn_check.execute("""
-        SELECT id, lab, pc_number, time_in, status FROM reservations
-        WHERE idNumber = ? AND date = ? AND status IN ('pending', 'approved')
-    """, (id_number, today)).fetchone()
+    reservation_id = request.form.get('reservation_id', '').strip()
+
+    # Skip check if sitting in FROM a reservation
+    existing_res = None
+    if not reservation_id:
+        existing_res = conn_check.execute("""
+            SELECT id, lab, pc_number, time_in, status FROM reservations
+            WHERE idNumber = ? AND date = ? AND status IN ('pending', 'approved')
+        """, (id_number, today)).fetchone()
 
     # Check active sit-in session
     active_session = conn_check.execute("""
