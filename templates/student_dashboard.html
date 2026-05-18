@@ -2237,6 +2237,7 @@ if (slId) { const el = document.getElementById(slId); if (el) el.classList.add('
         function previewPhoto(event) {
             const file = event.target.files[0];
             if (!file) return;
+            document.getElementById('profileForm').removeAttribute('data-remove-photo'); // ADD THIS
             const reader = new FileReader();
             reader.onload = e => { document.getElementById('avatarPreview').src = e.target.result; };
             reader.readAsDataURL(file);
@@ -2268,6 +2269,9 @@ if (slId) { const el = document.getElementById(slId); if (el) el.classList.add('
     closeConfirmModal();
     const form = document.getElementById('profileForm');
     const formData = new FormData(form);
+        if (form.getAttribute('data-remove-photo') === '1') {
+        formData.append('remove_photo', '1');
+    }
     if (!document.getElementById('f_newPassword').value.trim()) formData.delete('newPassword');
     const saveBtn = form.querySelector('button.btn-primary');
     const origText = saveBtn.textContent;
@@ -2291,6 +2295,14 @@ if (slId) { const el = document.getElementById(slId); if (el) el.classList.add('
                 if (da) da.src = src;
                 const topAvatar = document.getElementById('topbarAvatar');  // ← added
                 if (topAvatar) topAvatar.src = src;                         // ← added
+            }
+            else if (form.getAttribute('data-remove-photo') === '1') {
+                const defaultSrc = "{{ url_for('static', filename='images/default_pfp.jpg') }}";
+                ['dashAvatar', 'avatarPreview', 'topbarAvatar'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.src = defaultSrc + '?t=' + Date.now();
+                });
+                form.removeAttribute('data-remove-photo');
             }
             const dc = document.getElementById('dashCourseDisplay'); if (dc) dc.textContent = data.course;
             const de = document.getElementById('dashEmailDisplay'); if (de) de.textContent = data.email;
@@ -3421,6 +3433,7 @@ function toggleStudentSidebar() {
 function removePhoto() {
     document.getElementById('avatarPreview').src = "{{ url_for('static', filename='images/default_pfp.jpg') }}";
     document.getElementById('photoInput').value = '';
+    document.getElementById('profileForm').setAttribute('data-remove-photo', '1');
     markDirty();
 }
 

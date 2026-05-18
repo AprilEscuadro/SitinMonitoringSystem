@@ -558,8 +558,12 @@ def student_update_profile():
             new_sitin_count = current.get('sitin_count', get_sitin_count(course))
 
         photo_url  = current.get('photo_url') or None
+        remove_photo = request.form.get('remove_photo', '').strip()
         photo_file = request.files.get('photo')
-        if photo_file and photo_file.filename:
+
+        if remove_photo == '1':
+            photo_url = None
+        elif photo_file and photo_file.filename:
             ext = os.path.splitext(photo_file.filename)[1].lower()
             if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
                 return jsonify({'success': False, 'message': 'Invalid image type.'})
