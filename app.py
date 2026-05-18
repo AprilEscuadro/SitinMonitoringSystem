@@ -584,28 +584,29 @@ def student_update_profile():
             pass
 
         if new_password:
+            import hashlib as _hl
             hashed = _hl.sha256(new_password.encode()).hexdigest()
             conn.execute('''
                 UPDATE students
                 SET firstName=?, lastName=?, middleName=?,
                     email=?, address=?, course=?, yearLevel=?,
                     password=?, sitin_count=?,
-                    photo_url=COALESCE(?, photo_url)
+                    photo_url=?
                 WHERE idNumber=?
             ''', (first_name, last_name, middle_name,
-                  email, address, course, course_level,
-                  hashed, new_sitin_count, photo_url, id_number))
+                email, address, course, course_level,
+                    hashed, new_sitin_count, photo_url, id_number))
         else:
             conn.execute('''
                 UPDATE students
                 SET firstName=?, lastName=?, middleName=?,
                     email=?, address=?, course=?, yearLevel=?,
                     sitin_count=?,
-                    photo_url=COALESCE(?, photo_url)
+                    photo_url=?
                 WHERE idNumber=?
             ''', (first_name, last_name, middle_name,
-                  email, address, course, course_level,
-                  new_sitin_count, photo_url, id_number))
+                email, address, course, course_level,
+                new_sitin_count, photo_url, id_number))
 
         conn.commit()
         conn.close()
