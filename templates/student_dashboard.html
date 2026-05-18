@@ -1045,7 +1045,7 @@ footer.sidebar-collapsed { margin-left: 0; }
          onmouseover="this.style.background='#F5F6FA'"
          onmouseout="this.style.background='transparent'">
         <div style="position:relative;width:36px;height:36px;flex-shrink:0;">
-    <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
+    <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/default_pfp.jpg') }}"
          style="position:absolute;top:10%;left:10%;width:75%;height:75%;border-radius:50%;object-fit:cover;z-index:1;"
          id="topbarAvatar">
     {% if student_rank in [1,2,3] %}
@@ -1127,7 +1127,7 @@ footer.sidebar-collapsed { margin-left: 0; }
                         <div class="panel-body">
                             <div class="student-avatar-wrap">
                                 <div style="position:relative;width:170px;height:170px;margin:0 auto;">
-    <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
+    <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/default_pfp.jpg') }}"
          alt="Profile" id="dashAvatar"
          style="position:absolute;top:12%;left:12%;width:72%;height:72%;border-radius:50%;object-fit:cover;z-index:1;">
     {% if student_rank in [1,2,3] %}
@@ -1254,7 +1254,7 @@ footer.sidebar-collapsed { margin-left: 0; }
 
             <!-- LEFT: Photo -->
             <div style="display:flex;flex-direction:column;align-items:center;gap:0.6rem;min-width:150px;">
-                <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/ucmainccslogo.jpg') }}"
+                <img src="{{ student.photo_url if student.photo_url else url_for('static', filename='images/default_pfp.jpg') }}"
                      alt="Profile" class="avatar-preview-img" id="avatarPreview"
                      style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #F4B942;">
                 <p style="font-size:0.8rem;color:#555;font-weight:700;margin:0;">Profile Picture</p>
@@ -3419,7 +3419,7 @@ function toggleStudentSidebar() {
     localStorage.setItem('studentSidebarCollapsed', isCollapsed);
 }
 function removePhoto() {
-    document.getElementById('avatarPreview').src = "{{ url_for('static', filename='images/ucmainccslogo.jpg') }}";
+    document.getElementById('avatarPreview').src = "{{ url_for('static', filename='images/default_pfp.jpg') }}";
     document.getElementById('photoInput').value = '';
     markDirty();
 }

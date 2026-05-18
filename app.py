@@ -80,7 +80,7 @@ SUCCESS_PAGE = """
     <nav class="navbar">
         <div class="nav-content">
             <div class="logo-section">
-                <img src="{{ url_for('static', filename='images/ucmainccslogo.jpg') }}" alt="CCS Logo" class="navbar-logo">
+                <img src="{{ url_for('static', filename='images/default_pfp.jpg') }}" alt="CCS Logo" class="navbar-logo">
                 <span class="site-title">College of Computer Studies Sit-in Monitoring System</span>
             </div>
         </div>
@@ -109,7 +109,7 @@ ERROR_PAGE = """
     <nav class="navbar">
         <div class="nav-content">
             <div class="logo-section">
-                <img src="{{ url_for('static', filename='images/ucmainccslogo.jpg') }}" alt="CCS Logo" class="navbar-logo">
+                <img src="{{ url_for('static', filename='images/default_pfp.jpg') }}" alt="CCS Logo" class="navbar-logo">
                 <span class="site-title">College of Computer Studies Sit-in Monitoring System</span>
             </div>
         </div>
