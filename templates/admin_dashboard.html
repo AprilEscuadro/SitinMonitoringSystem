@@ -2390,6 +2390,7 @@ onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(15,62,
         <div></div>
         <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
         <input type="text" id="reqSearch" placeholder="Search..." class="table-search-input" oninput="filterReqTable()">
+        <input type="date" id="reqFilterDate" class="filter-select" style="width:155px;" onchange="filterReqTable()">
         <select id="reqFilterLab" class="filter-select" onchange="filterReqTable()">
             <option value="">All Laboratories</option>
             <option value="524">Lab 524</option>
@@ -5492,12 +5493,15 @@ function filterReqTable() {
     const status = document.getElementById('reqFilterStatus').value.trim();
     const lab    = document.getElementById('reqFilterLab').value.trim();
     const pc     = document.getElementById('reqFilterPC').value.trim();
+    const date   = document.getElementById('reqFilterDate').value.trim();
+
     reqFiltered = allReqRows.filter(row => {
         if (q && !row.textContent.toLowerCase().includes(q)) return false;
         if (status && row.getAttribute('data-status') !== status) return false;
         const cells = row.querySelectorAll('td');
         if (lab && cells[5]?.innerText.trim() !== lab) return false;
         if (pc  && cells[6]?.innerText.trim() !== 'PC ' + pc) return false;
+        if (date && cells[8]?.innerText.trim() !== date) return false;
         return true;
     });
     reqPage = 1;
