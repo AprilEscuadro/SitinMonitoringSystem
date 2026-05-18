@@ -1283,8 +1283,9 @@ def student_reserve():
     if not purpose or not lab or not time_in or not date or not pc_number:
         return jsonify({'success': False, 'message': 'All fields are required.'})
 
-    from datetime import datetime as _dt2
-    now = _dt2.now()
+    from datetime import datetime as _dt2, timezone, timedelta
+    PH_TZ = timezone(timedelta(hours=8))
+    now = _dt2.now(PH_TZ)
     today_str = now.date().isoformat()
 
     # Block past dates
